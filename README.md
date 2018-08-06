@@ -3,7 +3,7 @@
 This repository contains some R code and data files related to
 simulating passenger loads and schedules on the MBTA
 Framingham/Worcester Line.  There are *significant* caveats to this;
-please read my (blog post)[https://blog.bimajority.org/2018/08/05/in-which-i-waste-an-entire-weekend-modeling-one-line-of-regional-rail-in-am-peak/]
+please read my [blog post](https://blog.bimajority.org/2018/08/05/in-which-i-waste-an-entire-weekend-modeling-one-line-of-regional-rail-in-am-peak/)
 for more information about the methodology and data sources.
 Patches and improvements gladly accepted.
 
