@@ -4,20 +4,21 @@
 # of an R programmer and I found it difficult enough to make even this
 # work.
 #
-boardings.ctps <- read.csv("2012-boardings.csv")
+boardings.ctps <- read.csv("2012-boardings.csv", row.names = 2)
 arrival.times.df <- read.csv("2012-arrival-times.csv")
-stations <- boardings.ctps$station
-rownames(boardings.ctps) <- stations
-terminal <- "South Station"
+stations <- rownames(boardings.ctps)
+terminal <- stations[length(stations)]
 
 #
 # Train times are coded as minutes since midnight local time.
 # These arrival times are for the Winter 2012 schedule, relevant to
-# the CTPS data.
+# the CTPS data.  Subset the boardings data to just those trains
+# whose arrival times we model.
 #
 arrival.times <- arrival.times.df$time_minute
 trains <- arrival.times.df$train
 names(arrival.times) <- trains
+# for some reason, we can't say boardings.ctps[trains] here, idk why
 boardings.ctps <- boardings.ctps[names(arrival.times)] 
 
 #
