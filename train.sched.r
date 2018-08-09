@@ -5,7 +5,8 @@
 # work.
 #
 ctps <- read.csv("2012-boardings.csv")
-stations <- ctps$departing.station
+arrival.times.df <- read.csv("2012-arrival-times.csv")
+stations <- ctps$station
 rownames(ctps) <- stations
 terminal <- "South Station"
 
@@ -14,65 +15,65 @@ terminal <- "South Station"
 # These arrival times are for the Winter 2012 schedule, relevant to
 # the CTPS data.
 #
-arrival.times <- c(6*60+31, 7*60+8, 7*60+46, 8*60+11, 8*60+23, 8*60+56,
-	           9*60+8, 9*60+35, 10*60, 12*60+5)
-trains <- c("P500", "P502", "P504", "P506", "P508", "P510", "P512", "P514", "P516", "P518")
+arrival.times <- arrival.times.df$time_minute
+trains <- arrival.times.df$train
 names(arrival.times) <- trains
-net.boardings.by.train <- ctps[trains] 
-
-#
-# Compute the next train at _station_ after _this.train_, in probably
-# the least-smart possible way, and not generalizable to alternative
-# schedules.
-#
-# Note that we can't just index the array because the existing schedule
-# that the CTPS data reflects various express service configurations.
-# We need the next train that actually stops.
-#
-next.train.at <- function (this.train, station) {
-  i <- match(this.train, trains) + 1
-  while (i <= length(trains)) {
-    next.train <- trains[i]
-    if (!is.na(net.boardings.by.train[station,next.train])) {
-      return (next.train)
-    }
-    i <- i + 1
-  }
-  return (NA)
-}
+net.boardings.by.train <- ctps[names(arrival.times)] 
 
 #
 # Simulate passengers at _station_.  Returns a vector of times at which
 # the passengers embarking from _station_ would like to arrive at the
-# terminal station (i.e., South Station).  Uses globals *trains* and
-# *net.boardings.by.train* as well as whatever next.train.at() uses.
+# terminal station (i.e., South Station).
 #
 # The model we are simulating here is that there is a pool of passengers
 # looking to travel from _station_ to a terminal (half of them will get
 # off at a through station in the city, but that doesn't affect the model
 # because all trains take the same time to travel through the city).
+#
 # Passengers are assumed to take the latest train that would get them to
 # their destination on time, and this is modeled as a "desired arrival at
-# terminal" uniformly distributed between the scheduled arrival of the
-# train they actually boarded and a minute before the scheduled arrival of
-# the next train they could have taken, or one hour, whichever is less.
+# terminal" uniformly distributed over the interval between trains, or
+# the next hour, if it's the last train.
+#
+# We depart from this model slightly, in two important ways.  First,
+# we assume that some people on the train would *actually* like to
+# arrive a few minutes earlier, and nobody would literally want to arrive
+# exactly when the *next* train is scheduled to arrive (because they'd
+# just take that train instead), so there is a _desired.offset_, default
+# -5 (five minutes early) that shifts the uniform distribution we're
+# sampling from to account for this.  Secondly, if _fuzz.counts_ is TRUE
+# (the default setting) then we apply a bit of noise to the passenger counts
+# in the source data.  The noise is sampled from a normal distribution
+# with mean 1 and standard deviation 0.1, and the resulting noise factor
+# is multiplied by the net boarding count in the source data.
 #
 # See the blog post for more commentary on this model.
 #
-sample.arrivals <- function (station) {
-  this.train <- trains[1]
+sample.arrivals <- function (trains, boardings, station, desired.offset = -5,
+		   	     fuzz.counts = TRUE) {
+  # Filter out trains that did not stop at the audited train
+  station.boardings <- boardings[station,which(!is.na(boardings[station,]))]
+  arrivals <- arrival.times[names(station.boardings)]
   passengers <- c()
-  next.train <- next.train.at(this.train, station)
-  while (!is.na(next.train)) {
-    first_arrival <- arrival.times[this.train]
-    last_arrival <- min(arrival.times[next.train] - 1, first_arrival + 60)
-    boardings <- net.boardings.by.train[station,this.train]
-    if (boardings > 0) {
-      passengers <- append(passengers, 
-      		           runif(boardings, first_arrival, last_arrival))
+
+  for (i in 1:length(arrivals)) {
+    first.arrival <- arrivals[i] + desired.offset
+    if (i == length(arrivals)) {
+      last.arrival <- first.arrival + 59
+    } else {
+      last.arrival <- arrivals[i + 1] + desired.offset
     }
-    this.train <- next.train
-    next.train <- next.train.at(this.train, station)
+
+    if (fuzz.counts) {
+      # apply a gaussian fuzz to the passenger counts
+      count <- as.integer(station.boardings[i] * rnorm(1, 1, 0.1))
+    } else {
+      count <- station.boardings[i]
+    }
+    if (count > 0) {
+      train.pax <- runif(count, first.arrival, last.arrival)
+      passengers <- c(passengers, train.pax)
+    }
   }
   return (sort(passengers))
 }
@@ -160,7 +161,7 @@ for (i in 1:(length(new.arrivals) - 1)) {
 
   count <- 0
   for (station in model.stations) {
-    arrivals <- sample.arrivals(station)
+    arrivals <- sample.arrivals(trains, net.boardings.by.train, station)
     boarding <- length(arrivals[which(arrivals >= schedule[terminal, this.train] & arrivals < schedule[terminal, next.train])])
     pax.boarding[station,this.train] <- boarding
     count <- count + boarding
