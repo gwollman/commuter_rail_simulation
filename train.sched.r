@@ -135,37 +135,53 @@ format.minutes <- function (time.in.minutes) {
 # format.
 #format.minutes(schedule.times["South Station",])
 
-# Initialize data frames for both net boardings at each station
-# and cumulative passenger loads at each station.
-pax.boarding <- data.frame(station = model.stations)
-rownames(pax.boarding) <- pax.boarding$station
-pax.cumulative <- data.frame(station = model.stations)
-rownames(pax.cumulative) <- pax.cumulative$station
+#
+# Sample function, uses the global variables
+#
+sample.pax <- function (station) {
+  return (sample.arrivals(trains, boardings.ctps, station))
+}
 
 #
-# This loop is actually kinda wrong:
-# We should be calling sample.arrivals once per station,
-# and using the same simulated arrivals array for each train
-# (otherwise some pax will be either over- or under-counted).
-# Also, we should be running this a hundred times in a loop
-# and computing error bars on these estimates.  Should we
-# add some Gaussian noise here too?
+# Simulate the new schedule given a source of desired arrival time samples
+# and the new schedule.
 #
-# I'm not very good at R.  I'm sure there's a super-obvious
-# way to do this in R that just don't know.
-#
-for (i in 1:(length(new.arrivals) - 1)) {
-  this.train <- names(new.arrivals)[i]
-  next.train <- names(new.arrivals)[i + 1]
-  pax.boarding[this.train] <- rep(0, length(model.stations))
-  pax.cumulative[this.train] <- rep(0, length(model.stations))
+simulate.pax <- function (sampler, new.arrivals, model.stations, terminal,
+	     		  schedule) {
+  # Initialize data frames for both net boardings at each station
+  # and cumulative passenger loads at each station.
+  pax.boarding <- data.frame(station = model.stations)
+  rownames(pax.boarding) <- pax.boarding$station
+  pax.cumulative <- data.frame(station = model.stations)
+  rownames(pax.cumulative) <- pax.cumulative$station
 
-  count <- 0
-  for (station in model.stations) {
-    arrivals <- sample.arrivals(trains, boardings.ctps, station)
-    boarding <- length(arrivals[which(arrivals >= schedule[terminal, this.train] & arrivals < schedule[terminal, next.train])])
-    pax.boarding[station,this.train] <- boarding
-    count <- count + boarding
-    pax.cumulative[station,this.train] <- count
+  #
+  # This loop is actually kinda wrong:
+  # We should be calling sample.arrivals once per station,
+  # and using the same simulated arrivals array for each train
+  # (otherwise some pax will be either over- or under-counted).
+  # Also, we should be running this a hundred times in a loop
+  # and computing error bars on these estimates.  Should we
+  # add some Gaussian noise here too?
+  #
+  # I'm not very good at R.  I'm sure there's a super-obvious
+  # way to do this in R that just don't know.
+  #
+  for (i in 1:(length(new.arrivals) - 1)) {
+    this.train <- names(new.arrivals)[i]
+    next.train <- names(new.arrivals)[i + 1]
+    pax.boarding[this.train] <- rep(0, length(model.stations))
+    pax.cumulative[this.train] <- rep(0, length(model.stations))
+
+    count <- 0
+    for (station in model.stations) {
+      arrivals <- sampler(station)
+      boarding <- length(arrivals[which(arrivals >= schedule[terminal, this.train] & arrivals < schedule[terminal, next.train])])
+      pax.boarding[station,this.train] <- boarding
+      count <- count + boarding
+      pax.cumulative[station,this.train] <- count
+    }
   }
+
+  return (pax.cumulative)
 }
