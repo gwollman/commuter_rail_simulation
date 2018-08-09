@@ -4,10 +4,10 @@
 # of an R programmer and I found it difficult enough to make even this
 # work.
 #
-ctps <- read.csv("2012-boardings.csv")
+boardings.ctps <- read.csv("2012-boardings.csv")
 arrival.times.df <- read.csv("2012-arrival-times.csv")
-stations <- ctps$station
-rownames(ctps) <- stations
+stations <- boardings.ctps$station
+rownames(boardings.ctps) <- stations
 terminal <- "South Station"
 
 #
@@ -18,7 +18,7 @@ terminal <- "South Station"
 arrival.times <- arrival.times.df$time_minute
 trains <- arrival.times.df$train
 names(arrival.times) <- trains
-net.boardings.by.train <- ctps[names(arrival.times)] 
+boardings.ctps <- boardings.ctps[names(arrival.times)] 
 
 #
 # Simulate passengers at _station_.  Returns a vector of times at which
@@ -161,7 +161,7 @@ for (i in 1:(length(new.arrivals) - 1)) {
 
   count <- 0
   for (station in model.stations) {
-    arrivals <- sample.arrivals(trains, net.boardings.by.train, station)
+    arrivals <- sample.arrivals(trains, boardings.ctps, station)
     boarding <- length(arrivals[which(arrivals >= schedule[terminal, this.train] & arrivals < schedule[terminal, next.train])])
     pax.boarding[station,this.train] <- boarding
     count <- count + boarding
