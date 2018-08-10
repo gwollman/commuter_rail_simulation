@@ -189,7 +189,7 @@ required.units <- function (trains, loading, capacity) {
 }
 
 monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
-		   	     schedule, filename, capacity) {
+		   	     schedule, handler) {
   med.pax <- data.frame(station = model.stations, row.names = model.stations)
   pct90.pax <- data.frame(station = model.stations, row.names = model.stations)
   res <- list()
@@ -211,22 +211,33 @@ monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
     }
   }
 
-  message("")
-  message("Median passenger loads:")
-  print(med.pax[trains])
-  write.csv(med.pax[trains], paste("median-", filename, sep = ""))
-
-  message("")
-  message("90th percentile passenger loads:")
-  print(pct90.pax[trains])
-  write.csv(pct90.pax[trains], paste("90pct-", filename, sep = ""))
-
-  message("")
-  message("Units required:")
-  units <- required.units(trains, pct90.pax, capacity)
-  print(units)
-  return (units)
+  return (handler(med.pax, pct90.pax))
 }
     
-#print(simulate.pax(sample.pax, new.arrivals, model.stations, terminal, schedule))
-monte.carlo.pax(100, sample.pax, new.arrivals, model.stations, terminal, schedule, "5tph-local.csv", 232)
+result.handler <- function (filename, capacity, trains) {
+  return (function (med, pct90) {
+    message("")
+    message("Median passenger loads:")
+    print(ceiling(med[trains]))
+    write.csv(ceiling(med[trains]), paste("median-", filename, sep = ""))
+
+    message("")
+    message("90th percentile passenger loads:")
+    print(ceiling(pct90[trains]))
+    write.csv(ceiling(pct90[trains]), paste("90pct-", filename, sep = ""))
+
+    message("")
+    message("Difference between median and 90th %ile")
+    print(pct90[trains] - med[trains])
+
+    message("")
+    message("Units required:")
+    units <- required.units(trains, pct90, capacity)
+    print(units)
+    return (units)
+  })
+}
+
+monte.carlo.pax(100, sample.pax, new.arrivals, model.stations, terminal,
+		schedule, 
+		result.handler("5tph-local.csv", 232, names(new.arrivals)))
