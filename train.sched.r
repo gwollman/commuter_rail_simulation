@@ -158,23 +158,26 @@ monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
   return (handler(med.pax, pct90.pax))
 }
     
-result.handler <- function (filename, capacity, trains) {
+result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   return (function (med, pct90) {
-    message("")
-    message("Median passenger loads:")
-    print(ceiling(med[trains]))
-    write.csv(ceiling(med[trains]), paste("median-", filename, sep = ""))
+    if (want.median) {
+      message("Median passenger loads:")
+      print(ceiling(med[trains]))
+      write.csv(ceiling(med[trains]), paste("median-", filename, sep = ""))
+      message("")
+    }
 
-    message("")
     message("90th percentile passenger loads:")
     print(ceiling(pct90[trains]))
     write.csv(ceiling(pct90[trains]), paste("90pct-", filename, sep = ""))
-
     message("")
-    message("Difference between median and 90th %ile")
-    print(pct90[trains] - med[trains])
 
-    message("")
+    if (want.median) {
+      message("Difference between median and 90th %ile")
+      print(pct90[trains] - med[trains])
+      message("")
+    }
+
     message("Units required:")
     units <- required.units(trains, pct90, capacity)
     print(units)
@@ -182,62 +185,66 @@ result.handler <- function (filename, capacity, trains) {
   })
 }
 
-# stations that existing in 2012 when the CTPS data was
-# collected
-existing.stations <- c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-		       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,
-		       FALSE, TRUE, TRUE, TRUE)
-names(existing.stations) <- stations
-model.stations <- stations[existing.stations]
+run.trials <- function(ntrials = 250) {
+  # stations that existing in 2012 when the CTPS data was
+  # collected
+  existing.stations <- c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+			 TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,
+			 FALSE, TRUE, TRUE, TRUE)
+  names(existing.stations) <- stations
+  model.stations <- stations[existing.stations]
 
-# Drop South Station off the list because the end of the line can never
-# have any boardings
-length(model.stations) <- length(model.stations) - 1
+  # Drop South Station off the list because the end of the line can never
+  # have any boardings
+  length(model.stations) <- length(model.stations) - 1
 
-# Read in and transform the schedule, which indicates how much
-# time it takes for an inbound train to get to and serve each
-# station.
-#
-# For a local/express configuration would need to generalize this
-# to support multiple schedules.
-#
-schedule <- read.csv('emu-schedule.csv')
-schedule <- schedule[c("station", "minute")]
-rownames(schedule) <- schedule$station
-schedule$minute[1] = 0
+  # Read in and transform the schedule, which indicates how much
+  # time it takes for an inbound train to get to and serve each
+  # station.
+  #
+  # For a local/express configuration would need to generalize this
+  # to support multiple schedules.
+  #
+  schedule <- read.csv('emu-schedule.csv')
+  schedule <- schedule[c("station", "minute")]
+  rownames(schedule) <- schedule$station
+  schedule$minute[1] = 0
 
-# New service pattern: 5 trains per hour arriving at South Station starting
-# at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
-# total of 30 trains
-#
-# For a local/express or a short-turn configuration would need to generalize
-# this to indicate which trains operate which schedule.
-#
-new.arrivals <- 0:29 * 12 + 360
-names(new.arrivals) <- paste('X', as.character(new.arrivals), sep="")
+  # New service pattern: 5 trains per hour arriving at South Station starting
+  # at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
+  # total of 30 trains
+  #
+  # For a local/express or a short-turn configuration would need to generalize
+  # this to indicate which trains operate which schedule.
+  #
+  new.arrivals <- 0:29 * 12 + 360
+  names(new.arrivals) <- paste('X', as.character(new.arrivals), sep="")
 
-# Add each of the trains in the new service pattern to the schedule.
-# Because we care about arrival times the arithmetic is a bit more painful.
-for (i in 1:length(new.arrivals)) {
-  arrival = new.arrivals[i]
-  train = names(new.arrivals)[i]
-  schedule[train] <- schedule$minute + arrival - schedule$minute[length(schedule$minute)]
+  # Add each of the trains in the new service pattern to the schedule.
+  # Because we care about arrival times the arithmetic is a bit more painful.
+  for (i in 1:length(new.arrivals)) {
+    arrival = new.arrivals[i]
+    train = names(new.arrivals)[i]
+    schedule[train] <- schedule$minute + arrival - schedule$minute[length(schedule$minute)]
+  }
+
+  # Just the times, in minutes since midnight
+  schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
+
+  format.minutes <- function (time.in.minutes) {
+    # unclear why we need time.in.minutes %% 60 to be cast to numeric
+    paste(time.in.minutes %/% 60, formatC(as.numeric(time.in.minutes %% 60),
+					  format = "d", width = "2", flag = "0"),
+	  sep = ":")
+  } 
+
+  # Example: get the arrival times at any given station in human-readable
+  # format.
+  #format.minutes(schedule.times["South Station",])
+
+  monte.carlo.pax(ntrials, sample.pax, new.arrivals, model.stations, terminal,
+		  schedule, 
+		  result.handler("5tph-local.csv", 232, names(new.arrivals)))
 }
 
-# Just the times, in minutes since midnight
-schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
-
-format.minutes <- function (time.in.minutes) {
-  # unclear why we need time.in.minutes %% 60 to be cast to numeric
-  paste(time.in.minutes %/% 60, formatC(as.numeric(time.in.minutes %% 60),
-  			    		format = "d", width = "2", flag = "0"),
-	sep = ":")
-} 
-
-# Example: get the arrival times at any given station in human-readable
-# format.
-#format.minutes(schedule.times["South Station",])
-
-monte.carlo.pax(250, sample.pax, new.arrivals, model.stations, terminal,
-		schedule, 
-		result.handler("5tph-local.csv", 232, names(new.arrivals)))
+run.trials()
