@@ -238,6 +238,6 @@ format.minutes <- function (time.in.minutes) {
 # format.
 #format.minutes(schedule.times["South Station",])
 
-monte.carlo.pax(100, sample.pax, new.arrivals, model.stations, terminal,
+monte.carlo.pax(250, sample.pax, new.arrivals, model.stations, terminal,
 		schedule, 
 		result.handler("5tph-local.csv", 232, names(new.arrivals)))
