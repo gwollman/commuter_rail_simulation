@@ -185,12 +185,7 @@ result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   })
 }
 
-run.trials <- function(all.stations, existing.stations, ntrials = 250) {
-  # Drop the terminal off the list because the end of the line can never
-  # have any boardings
-  model.stations <- head(all.stations[existing.stations], -1)
-  terminal <- tail(all.stations, 1)
-
+make.new.schedule <- function () {
   # Read in and transform the schedule, which indicates how much
   # time it takes for an inbound train to get to and serve each
   # station.
@@ -203,6 +198,25 @@ run.trials <- function(all.stations, existing.stations, ntrials = 250) {
   rownames(schedule) <- schedule$station
   schedule$minute[1] = 0
 
+  return (schedule)
+}
+
+make.service.pattern <- function (start.time, end.time, tph) {
+  interval <- 60 / tph
+  n <- (end.time - start.time) %/% interval
+  v <- (0:(n - 1) * interval) + start.time
+  names(v) <- paste('X', as.character(v), sep="")
+  return(v)
+}
+
+run.trials <- function(all.stations, existing.stations, ntrials = 250) {
+  # Drop the terminal off the list because the end of the line can never
+  # have any boardings
+  model.stations <- head(all.stations[existing.stations], -1)
+  terminal <- tail(all.stations, 1)
+
+  schedule <- make.new.schedule()
+
   # New service pattern: 5 trains per hour arriving at South Station starting
   # at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
   # total of 30 trains
@@ -210,8 +224,7 @@ run.trials <- function(all.stations, existing.stations, ntrials = 250) {
   # For a local/express or a short-turn configuration would need to generalize
   # this to indicate which trains operate which schedule.
   #
-  new.arrivals <- 0:29 * 12 + 360
-  names(new.arrivals) <- paste('X', as.character(new.arrivals), sep="")
+  new.arrivals <- make.service.pattern(360, 720, 5)
 
   # Add each of the trains in the new service pattern to the schedule.
   # Because we care about arrival times the arithmetic is a bit more painful.
