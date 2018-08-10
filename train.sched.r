@@ -185,14 +185,14 @@ result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   })
 }
 
-run.trials <- function(ntrials = 250) {
+run.trials <- function(all.stations, ntrials = 250) {
   # stations that existing in 2012 when the CTPS data was
   # collected
   existing.stations <- c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
 			 TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,
 			 FALSE, TRUE, TRUE, TRUE)
-  names(existing.stations) <- stations
-  model.stations <- stations[existing.stations]
+  names(existing.stations) <- all.stations
+  model.stations <- all.stations[existing.stations]
 
   # Drop South Station off the list because the end of the line can never
   # have any boardings
@@ -247,4 +247,4 @@ run.trials <- function(ntrials = 250) {
 		  result.handler("5tph-local.csv", 232, names(new.arrivals)))
 }
 
-run.trials()
+run.trials(stations)
