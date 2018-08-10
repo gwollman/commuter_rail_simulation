@@ -201,15 +201,16 @@ make.new.schedule <- function () {
   return (schedule)
 }
 
-make.service.pattern <- function (start.time, end.time, tph) {
+make.local.service <- function (start.time, end.time, tph) {
   interval <- 60 / tph
   n <- (end.time - start.time) %/% interval
   v <- (0:(n - 1) * interval) + start.time
   names(v) <- paste('X', as.character(v), sep="")
-  return(v)
+  return (list(v, rep('minute', length(v))))
 }
 
-run.trials <- function(all.stations, existing.stations, ntrials = 250) {
+run.trials <- function(all.stations, existing.stations, make.service.pattern,
+	      	       ntrials = 250) {
   # Drop the terminal off the list because the end of the line can never
   # have any boardings
   model.stations <- head(all.stations[existing.stations], -1)
@@ -224,14 +225,17 @@ run.trials <- function(all.stations, existing.stations, ntrials = 250) {
   # For a local/express or a short-turn configuration would need to generalize
   # this to indicate which trains operate which schedule.
   #
-  new.arrivals <- make.service.pattern(360, 720, 5)
+  service.pattern <- make.service.pattern(360, 720, 5)
+  new.arrivals <- service.pattern[[1]]
+  train.types <- service.pattern[[2]]
 
   # Add each of the trains in the new service pattern to the schedule.
   # Because we care about arrival times the arithmetic is a bit more painful.
   for (i in 1:length(new.arrivals)) {
-    arrival = new.arrivals[i]
-    train = names(new.arrivals)[i]
-    schedule[train] <- schedule$minute + arrival - schedule$minute[length(schedule$minute)]
+    arrival <- new.arrivals[i]
+    train <- names(new.arrivals)[i]
+    train.type <- train.types[i]
+    schedule[train] <- schedule[train.type] + arrival - schedule[terminal, train.type]
   }
 
   # Just the times, in minutes since midnight
@@ -257,4 +261,4 @@ run.trials <- function(all.stations, existing.stations, ntrials = 250) {
 # collected
 existing.stations <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
 
-run.trials(stations, existing.stations)
+run.trials(stations, existing.stations, make.local.service)
