@@ -158,6 +158,13 @@ monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
   return (handler(med.pax, pct90.pax))
 }
     
+format.minutes <- function (time.in.minutes) {
+  # unclear why we need time.in.minutes %% 60 to be cast to numeric
+  paste(time.in.minutes %/% 60, formatC(as.numeric(time.in.minutes %% 60),
+  			    		format = "d", width = "2", flag = "0"),
+	sep = ":")
+} 
+
 result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   return (function (med, pct90) {
     if (want.median) {
@@ -239,14 +246,7 @@ run.trials <- function(all.stations, existing.stations, make.service.pattern,
   }
 
   # Just the times, in minutes since midnight
-  schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
-
-  format.minutes <- function (time.in.minutes) {
-    # unclear why we need time.in.minutes %% 60 to be cast to numeric
-    paste(time.in.minutes %/% 60, formatC(as.numeric(time.in.minutes %% 60),
-					  format = "d", width = "2", flag = "0"),
-	  sep = ":")
-  } 
+  #schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
 
   # Example: get the arrival times at any given station in human-readable
   # format.
