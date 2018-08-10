@@ -7,6 +7,21 @@ please read my [blog post](https://blog.bimajority.org/2018/08/05/in-which-i-was
 for more information about the methodology and data sources.
 Patches and improvements gladly accepted.
 
+The following changes have been made since the initial blog post:
+* Use of global variables has been substantially reduced, to allow for
+the model to be generalized and eventually applied to other lines and
+other scenarios.
+* Other places where values were hardcoded have been replaced with
+code to deduce or generate the required data.
+* We now run 250 Monte Carlo trials and output the 90th percentile
+loadings rather than just running the simulation once and outputting
+the exact simulated loadings from that one run.
+* The unit requirements are computed, based on the results of the
+simulation and a parameter which is the number of passengers per unit.
+* Improvements have been made to the schedule calculations, in
+preparation for adding the ability to handle more complex service
+patterns like short turns and expresses.
+
 The files in this repository are as follows:
 
 * `2012-boardings.csv`: net inbound Framingham/Worcester boardings at all
