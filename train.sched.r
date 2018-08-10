@@ -185,18 +185,11 @@ result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   })
 }
 
-run.trials <- function(all.stations, ntrials = 250) {
-  # stations that existing in 2012 when the CTPS data was
-  # collected
-  existing.stations <- c(TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-			 TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,
-			 FALSE, TRUE, TRUE, TRUE)
-  names(existing.stations) <- all.stations
-  model.stations <- all.stations[existing.stations]
-
-  # Drop South Station off the list because the end of the line can never
+run.trials <- function(all.stations, existing.stations, ntrials = 250) {
+  # Drop the terminal off the list because the end of the line can never
   # have any boardings
-  length(model.stations) <- length(model.stations) - 1
+  model.stations <- head(all.stations[existing.stations], -1)
+  terminal <- tail(all.stations, 1)
 
   # Read in and transform the schedule, which indicates how much
   # time it takes for an inbound train to get to and serve each
@@ -247,4 +240,8 @@ run.trials <- function(all.stations, ntrials = 250) {
 		  result.handler("5tph-local.csv", 232, names(new.arrivals)))
 }
 
-run.trials(stations)
+# stations that existing in 2012 when the CTPS data was
+# collected
+existing.stations <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
+
+run.trials(stations, existing.stations)
