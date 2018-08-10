@@ -216,11 +216,11 @@ make.local.service <- function (start.time, end.time, tph) {
   return (list(v, rep('minute', length(v))))
 }
 
-run.trials <- function(all.stations, existing.stations, make.service.pattern,
+run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 	      	       ntrials = 250) {
   # Drop the terminal off the list because the end of the line can never
   # have any boardings
-  model.stations <- head(all.stations[existing.stations], -1)
+  model.stations <- all.stations[stations.with.data]
   terminal <- tail(all.stations, 1)
 
   schedule <- make.new.schedule()
@@ -257,8 +257,7 @@ run.trials <- function(all.stations, existing.stations, make.service.pattern,
 		  result.handler("5tph-local.csv", 232, names(new.arrivals)))
 }
 
-# stations that existing in 2012 when the CTPS data was
-# collected
-existing.stations <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
+# stations that existed in 2012 when the CTPS data was collected
+stations.with.data <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
 
-run.trials(stations, existing.stations, make.local.service)
+run.trials(stations, stations.with.data, make.local.service)
