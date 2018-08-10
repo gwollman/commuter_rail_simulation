@@ -176,4 +176,57 @@ simulate.pax <- function (sampler, new.arrivals, model.stations, terminal,
   return (pax.cumulative)
 }
 
-print(simulate.pax(sample.pax, new.arrivals, model.stations, terminal, schedule))
+# Compute units required -- a property of the train, not of individual
+# stations, so compute the max loading (NA's excluded) for each train.
+required.units <- function (trains, loading, capacity) {
+  units <- rep(NA, length(trains))
+  names(units) <- trains
+
+  for (train in trains) {
+    units[train] <- ceiling(max(loading[train], na.rm = TRUE) / capacity)
+  }
+  return (units)
+}
+
+monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
+		   	     schedule, filename, capacity) {
+  med.pax <- data.frame(station = model.stations, row.names = model.stations)
+  pct90.pax <- data.frame(station = model.stations, row.names = model.stations)
+  res <- list()
+  trains <- names(new.arrivals)
+
+  for (i in 1:n) {
+    res[[i]] <- simulate.pax(sampler, new.arrivals, model.stations, terminal, 
+    	   		     schedule)
+  }
+  for (station in model.stations) {
+    for (train in trains) {
+      v <- rep(NA, length(trains))
+      for (i in 1:n) {
+        v[[i]] <- res[[i]][station,train]
+      }
+      q <- quantile(v, probs = c(0.5, 0.9), na.rm = TRUE)
+      med.pax[station, train] <- q[1]
+      pct90.pax[station, train] <- q[2]
+    }
+  }
+
+  message("")
+  message("Median passenger loads:")
+  print(med.pax[trains])
+  write.csv(med.pax[trains], paste("median-", filename, sep = ""))
+
+  message("")
+  message("90th percentile passenger loads:")
+  print(pct90.pax[trains])
+  write.csv(pct90.pax[trains], paste("90pct-", filename, sep = ""))
+
+  message("")
+  message("Units required:")
+  units <- required.units(trains, pct90.pax, capacity)
+  print(units)
+  return (units)
+}
+    
+#print(simulate.pax(sample.pax, new.arrivals, model.stations, terminal, schedule))
+monte.carlo.pax(100, sample.pax, new.arrivals, model.stations, terminal, schedule, "5tph-local.csv", 232)
