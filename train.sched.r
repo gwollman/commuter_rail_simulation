@@ -302,26 +302,47 @@ doit <- function (filename, pattern) {
 	     ntrials = 250)
 }
 
-message("4 tph, all local")
-message("")
-doit("4tph-local.csv", function () make.local.service(360, 720, 4))
+# message("4 tph, all local")
+# message("")
+# doit("4tph-local.csv", function () make.local.service(360, 720, 4))
 
-message("4 tph, alternating short and local")
-message("")
-doit("4tph-short.csv", function () make.short.service(360, 720, 4))
+# message("4 tph, alternating short and local")
+# message("")
+# doit("4tph-short.csv", function () make.short.service(360, 720, 4))
 
-message("5 tph, all local")
-message("")
-doit("5tph-local.csv", function () make.local.service(360, 720, 5))
+# message("5 tph, all local")
+# message("")
+# doit("5tph-local.csv", function () make.local.service(360, 720, 5))
 
-message("5 tph, alternating short and local")
-message("")
-doit("5tph-short.csv", function () make.short.service(360, 720, 5))
+# message("5 tph, alternating short and local")
+# message("")
+# doit("5tph-short.csv", function () make.short.service(360, 720, 5))
 
-message("6 tph, all local")
-message("")
-doit("6tph-local.csv", function () make.local.service(360, 720, 6))
+# message("6 tph, all local")
+# message("")
+# doit("6tph-local.csv", function () make.local.service(360, 720, 6))
 
-message("6 tph, alternative short and local")
+# message("6 tph, alternative short and local")
+# message("")
+# doit("6tph-short.csv", function () make.short.service(360, 720, 6))
+
+# Here's a more complicated service pattern:
+#  alternating short turns and local service, 4 tph, during low-demand periods
+#  (arbitrarily, 6a-7a and 10a-12n)
+#  6 tph all-local service during peak (7a-10a)
+complicated.service <- function () {
+  early.t <- c(360,     375,     390,     405,     420)
+  early.s <- c('local', 'short', 'local', 'short', 'local')
+  rush.t <- (0:16 * 10) + 430
+  rush.s <- rep('local', length(rush.t))
+  late.t <- c(600,     615,     630,     645,     660,     675,     690,     705,     720)
+  late.s <- c('local', 'short', 'local', 'short', 'local', 'short', 'local', 'short', 'local')
+  t <- c(early.t, rush.t, late.t)
+  s <- c(early.s, rush.s, late.s)
+  names(t) <- paste('X', as.character(t), sep="")
+  return (list(t, s))
+}
+
+message("complicated service")
 message("")
-doit("6tph-short.csv", function () make.short.service(360, 720, 6))
+doit("complicated.csv", complicated.service)
