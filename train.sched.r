@@ -103,14 +103,24 @@ simulate.pax <- function (sampler, new.arrivals, model.stations, terminal,
   last.sums <- rep(0, length(new.arrivals))
   for (station in model.stations) {
     arrivals <- sampler(station)
-    for (i in 1:(length(new.arrivals))) {
-      this.train <- names(new.arrivals)[i]
-      next.train <- names(new.arrivals)[i + 1]
+    schedule.here <- schedule[names(new.arrivals)][station,]
+    stopping.here <- which(!is.na(schedule.here))
+    trains.stopping.here <- names(schedule.here[stopping.here])
+
+    for (i in 1:length(new.arrivals)) {
+      this.train <- names(new.arrivals[i])
+      # Only compute boardings if this train actually stops at this station
+      j <- match(this.train, trains.stopping.here)
+      if (is.na(j)) next
+
+      # Find the next train that actually stops here.
+      next.train <- trains.stopping.here[j + 1]
+
       if (is.na(next.train)) {
-        boarding <- arrivals[which(arrivals >= schedule[terminal, this.train])]
+	boarding <- arrivals[which(arrivals >= schedule[terminal, this.train])]
       } else {
-        boarding <- arrivals[which(arrivals >= schedule[terminal, this.train] &
-      	       	  		   arrivals < schedule[terminal, next.train])]
+	boarding <- arrivals[which(arrivals >= schedule[terminal, this.train] &
+				   arrivals < schedule[terminal, next.train])]
       }
       last.sums[i] <- last.sums[i] + length(boarding)
       pax.cumulative[station,this.train] <- last.sums[i]
@@ -201,23 +211,51 @@ make.new.schedule <- function () {
   # to support multiple schedules.
   #
   schedule <- read.csv('emu-schedule.csv')
-  schedule <- schedule[c("station", "local")]
+  schedule <- schedule[c("station", "local", "short", "express")]
   rownames(schedule) <- schedule$station
   schedule$local[1] = 0
 
   return (schedule)
 }
 
+# Generates a service pattern with all local service.
 make.local.service <- function (start.time, end.time, tph) {
   interval <- 60 / tph
   n <- (end.time - start.time) %/% interval
   v <- (0:(n - 1) * interval) + start.time
   names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep('local', length(v))))
+  return (list(v, rep('local', n)))
+}
+
+# Generates a service pattern with all local service, but
+# alternating short-turn and full-length trains.
+make.short.service <- function (start.time, end.time, tph) {
+  interval <- 60 / tph
+  n <- (end.time - start.time) %/% interval
+  # Number of trains must be even for this service pattern
+  if (n %% 2 == 1) {
+    n <- n + 1
+  }
+  v <- (0:(n - 1) * interval) + start.time
+  names(v) <- paste('X', as.character(v), sep="")
+  return (list(v, rep(c('short', 'local'), n %/% 2)))
+}
+
+# Same as make.short.service but reverses the order.
+make.short.service.2 <- function (start.time, end.time, tph) {
+  interval <- 60 / tph
+  n <- (end.time - start.time) %/% interval
+  # Number of trains must be even for this service pattern
+  if (n %% 2 == 1) {
+    n <- n + 1
+  }
+  v <- (0:(n - 1) * interval) + start.time
+  names(v) <- paste('X', as.character(v), sep="")
+  return (list(v, rep(c('local', 'short'), n %/% 2)))
 }
 
 run.trials <- function(all.stations, stations.with.data, make.service.pattern,
-	      	       ntrials = 250) {
+	      	       filename, start.time, end.time, tph, ntrials = 250) {
   # Drop the terminal off the list because the end of the line can never
   # have any boardings
   model.stations <- all.stations[stations.with.data]
@@ -228,11 +266,7 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
   # New service pattern: 5 trains per hour arriving at South Station starting
   # at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
   # total of 30 trains
-  #
-  # For a local/express or a short-turn configuration would need to generalize
-  # this to indicate which trains operate which schedule.
-  #
-  service.pattern <- make.service.pattern(360, 720, 5)
+  service.pattern <- make.service.pattern(start.time, end.time, tph)
   new.arrivals <- service.pattern[[1]]
   train.types <- service.pattern[[2]]
 
@@ -245,6 +279,8 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
     schedule[train] <- schedule[train.type] + arrival - schedule[terminal, train.type]
   }
 
+  #print(schedule[names(new.arrivals)])
+
   # Just the times, in minutes since midnight
   #schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
 
@@ -254,10 +290,11 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 
   monte.carlo.pax(ntrials, sample.pax, new.arrivals, model.stations, terminal,
 		  schedule, 
-		  result.handler("5tph-local.csv", 232, names(new.arrivals)))
+		  result.handler(filename, 232, names(new.arrivals)))
 }
 
 # stations that existed in 2012 when the CTPS data was collected
 stations.with.data <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
 
-run.trials(stations, stations.with.data, make.local.service)
+run.trials(stations, stations.with.data, make.short.service.2, "5tph-short.csv",
+	   ntrials = 250, start.time = 360, end.time = 720, tph = 5)
