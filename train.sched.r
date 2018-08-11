@@ -353,13 +353,13 @@ doit <- function (filename, pattern) {
 # 6 tph 6:00-8:30 (16 trains)
 # every 8 minutes from 8:40 to 9:12 (5 trains)
 # 6 tph 9:20-10:00 (5 trains)
-# 3 tph 10:20-12:00 (4 trains) and the rest of midday
+# 3 tph 10:20-12:00 (6 trains) and the rest of midday
 #
 rush.hour.push <- function () {
   rush.t <- (0:15 * 10) + 360
   rush.plus.t <- (0:4 * 8) + 520
   shoulder.t <- (0:4 * 10) + 560
-  midday.t <- (0:3 * 20) + 620
+  midday.t <- (0:5 * 20) + 620
 
   t <- c(rush.t, rush.plus.t, shoulder.t, midday.t)
   s <- rep('local', length(t))
