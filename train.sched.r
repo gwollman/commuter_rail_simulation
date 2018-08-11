@@ -350,24 +350,19 @@ doit <- function (filename, pattern) {
 # The biggest capacity crunch seems to be during rush right around
 # 9:00, so let's try this service (all trains local):
 #
-# 3 tph 6:10-7:30 (5 trains)
-# 6 tph 7:40-8:30 (6 trains)
+# 6 tph 6:00-8:30 (16 trains)
 # every 8 minutes from 8:40 to 9:12 (5 trains)
-# 3 tph 9:20-12:00 (8 trains)
-#
-# Half of midday trains short-turn at Framingham
+# 6 tph 9:20-10:00 (5 trains)
+# 3 tph 10:20-12:00 (4 trains) and the rest of midday
 #
 rush.hour.push <- function () {
-  early.t <- (0:4 * 20) + 370
-  rush.t <- (0:5 * 10) + 460
+  rush.t <- (0:15 * 10) + 360
   rush.plus.t <- (0:4 * 8) + 520
-  late.t <- (0:8 * 20) + 560
+  shoulder.t <- (0:4 * 10) + 560
+  midday.t <- (0:3 * 20) + 620
 
-  t <- c(early.t, rush.t, rush.plus.t, late.t)
+  t <- c(rush.t, rush.plus.t, shoulder.t, midday.t)
   s <- rep('local', length(t))
-  s[20] <- 'short' # X620 10:20
-  s[22] <- 'short' # X660 11:00
-  s[24] <- 'short' # X700 10:40
   names(t) <- paste('X', as.character(t), sep="")
   return (list(t, s))
 }
