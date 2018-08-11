@@ -201,9 +201,9 @@ make.new.schedule <- function () {
   # to support multiple schedules.
   #
   schedule <- read.csv('emu-schedule.csv')
-  schedule <- schedule[c("station", "minute")]
+  schedule <- schedule[c("station", "local")]
   rownames(schedule) <- schedule$station
-  schedule$minute[1] = 0
+  schedule$local[1] = 0
 
   return (schedule)
 }
@@ -213,7 +213,7 @@ make.local.service <- function (start.time, end.time, tph) {
   n <- (end.time - start.time) %/% interval
   v <- (0:(n - 1) * interval) + start.time
   names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep('minute', length(v))))
+  return (list(v, rep('local', length(v))))
 }
 
 run.trials <- function(all.stations, stations.with.data, make.service.pattern,

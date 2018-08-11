@@ -1,4 +1,4 @@
-km,station,time from prev (s),station time (s),total time (s),time with 7% pad,minute,current P512
+km,station,time from prev (s),station time (s),total time (s),time with 7% pad,local,current P512
 71.3,Worcester Union,,,0,,,
 68.8,Biotech Park,103,55,158,169.06,3,infill
 58.7,Grafton,276,72,506,541.42,10,13
