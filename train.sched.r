@@ -51,7 +51,7 @@ boardings.ctps <- boardings.ctps[names(arrival.times)]
 # See the blog post for more commentary on this model.
 #
 sample.arrivals <- function (trains, boardings, station, desired.offset = -5,
-		   	     fuzz.counts = TRUE) {
+		   	     fuzz.counts = TRUE, fuzz.sigma = 0.05) {
   # Filter out trains that did not stop at the audited train
   station.boardings <- boardings[station,which(!is.na(boardings[station,]))]
   arrivals <- arrival.times[names(station.boardings)]
@@ -67,7 +67,7 @@ sample.arrivals <- function (trains, boardings, station, desired.offset = -5,
 
     if (fuzz.counts) {
       # apply a gaussian fuzz to the passenger counts
-      count <- as.integer(station.boardings[i] * rnorm(1, 1, 0.1))
+      count <- as.integer(station.boardings[i] * rnorm(1, 1, fuzz.sigma))
     } else {
       count <- station.boardings[i]
     }
@@ -180,13 +180,13 @@ result.handler <- function (filename, capacity, trains, want.median = FALSE) {
     if (want.median) {
       message("Median passenger loads:")
       print(ceiling(med[trains]))
-      write.csv(ceiling(med[trains]), paste("median-", filename, sep = ""))
+      write.csv(ceiling(med[trains]), paste("median", filename, sep = "-"))
       message("")
     }
 
     message("90th percentile passenger loads:")
     print(ceiling(pct90[trains]))
-    write.csv(ceiling(pct90[trains]), paste("90pct-", filename, sep = ""))
+    write.csv(ceiling(pct90[trains]), paste("90pct", filename, sep = "-"))
     message("")
 
     if (want.median) {
@@ -198,6 +198,7 @@ result.handler <- function (filename, capacity, trains, want.median = FALSE) {
     message("Units required:")
     units <- required.units(trains, pct90, capacity)
     print(units)
+    write.csv(units, paste("units", filename, sep = "-"))
     return (units)
   })
 }
@@ -255,7 +256,7 @@ make.short.service.2 <- function (start.time, end.time, tph) {
 }
 
 run.trials <- function(all.stations, stations.with.data, make.service.pattern,
-	      	       filename, start.time, end.time, tph, ntrials = 250) {
+	      	       filename, ntrials = 250) {
   # Drop the terminal off the list because the end of the line can never
   # have any boardings
   model.stations <- all.stations[stations.with.data]
@@ -266,7 +267,7 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
   # New service pattern: 5 trains per hour arriving at South Station starting
   # at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
   # total of 30 trains
-  service.pattern <- make.service.pattern(start.time, end.time, tph)
+  service.pattern <- make.service.pattern()
   new.arrivals <- service.pattern[[1]]
   train.types <- service.pattern[[2]]
 
@@ -279,7 +280,7 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
     schedule[train] <- schedule[train.type] + arrival - schedule[terminal, train.type]
   }
 
-  #print(schedule[names(new.arrivals)])
+  write.csv(schedule[names(new.arrivals)], paste('sched', filename, sep = '-'))
 
   # Just the times, in minutes since midnight
   #schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
@@ -293,8 +294,34 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 		  result.handler(filename, 232, names(new.arrivals)))
 }
 
-# stations that existed in 2012 when the CTPS data was collected
-stations.with.data <- apply(boardings.ctps, 1, function (row) !all(is.na(row)))
+doit <- function (filename, pattern) {
+  run.trials(all.stations = stations, 
+	     stations.with.data = apply(boardings.ctps, 1,
+	   		      	        function (row) !all(is.na(row))),
+	     filename = filename, make.service.pattern = pattern,
+	     ntrials = 250)
+}
 
-run.trials(stations, stations.with.data, make.short.service.2, "5tph-short.csv",
-	   ntrials = 250, start.time = 360, end.time = 720, tph = 5)
+message("4 tph, all local")
+message("")
+doit("4tph-local.csv", function () make.local.service(360, 720, 4))
+
+message("4 tph, alternating short and local")
+message("")
+doit("4tph-short.csv", function () make.short.service(360, 720, 4))
+
+message("5 tph, all local")
+message("")
+doit("5tph-local.csv", function () make.local.service(360, 720, 5))
+
+message("5 tph, alternating short and local")
+message("")
+doit("5tph-short.csv", function () make.short.service(360, 720, 5))
+
+message("6 tph, all local")
+message("")
+doit("6tph-local.csv", function () make.local.service(360, 720, 6))
+
+message("6 tph, alternative short and local")
+message("")
+doit("6tph-short.csv", function () make.short.service(360, 720, 6))
