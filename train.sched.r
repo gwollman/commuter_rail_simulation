@@ -330,19 +330,48 @@ doit <- function (filename, pattern) {
 #  alternating short turns and local service, 4 tph, during low-demand periods
 #  (arbitrarily, 6a-7a and 10a-12n)
 #  6 tph all-local service during peak (7a-10a)
-complicated.service <- function () {
-  early.t <- c(360,     375,     390,     405,     420)
-  early.s <- c('local', 'short', 'local', 'short', 'local')
-  rush.t <- (0:16 * 10) + 430
-  rush.s <- rep('local', length(rush.t))
-  late.t <- c(600,     615,     630,     645,     660,     675,     690,     705,     720)
-  late.s <- c('local', 'short', 'local', 'short', 'local', 'short', 'local', 'short', 'local')
-  t <- c(early.t, rush.t, late.t)
-  s <- c(early.s, rush.s, late.s)
+# complicated.service <- function () {
+#   early.t <- c(360,     375,     390,     405,     420)
+#   early.s <- c('local', 'short', 'local', 'short', 'local')
+#   rush.t <- (0:16 * 10) + 430
+#   rush.s <- rep('local', length(rush.t))
+#   late.t <- c(600,     615,     630,     645,     660,     675,     690,     705,     720)
+#   late.s <- c('local', 'short', 'local', 'short', 'local', 'short', 'local', 'short', 'local')
+#   t <- c(early.t, rush.t, late.t)
+#   s <- c(early.s, rush.s, late.s)
+#   names(t) <- paste('X', as.character(t), sep="")
+#   return (list(t, s))
+# }
+
+# message("complicated service")
+# message("")
+# doit("complicated.csv", complicated.service)
+
+# The biggest capacity crunch seems to be during rush right around
+# 9:00, so let's try this service (all trains local):
+#
+# 3 tph 6:10-7:30 (5 trains)
+# 6 tph 7:40-8:30 (6 trains)
+# every 8 minutes from 8:40 to 9:12 (5 trains)
+# 3 tph 9:20-12:00 (8 trains)
+#
+# Half of midday trains short-turn at Framingham
+#
+rush.hour.push <- function () {
+  early.t <- (0:4 * 20) + 370
+  rush.t <- (0:5 * 10) + 460
+  rush.plus.t <- (0:4 * 8) + 520
+  late.t <- (0:8 * 20) + 560
+
+  t <- c(early.t, rush.t, rush.plus.t, late.t)
+  s <- rep('local', length(t))
+  s[20] <- 'short' # X620 10:20
+  s[22] <- 'short' # X660 11:00
+  s[24] <- 'short' # X700 10:40
   names(t) <- paste('X', as.character(t), sep="")
   return (list(t, s))
 }
 
-message("complicated service")
+message("rush-hour push")
 message("")
-doit("complicated.csv", complicated.service)
+doit("rush-hour-push.csv", rush.hour.push)
