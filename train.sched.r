@@ -367,6 +367,10 @@ rush.hour.push <- function () {
   return (list(t, s))
 }
 
-message("rush-hour push")
+# message("rush-hour push")
+# message("")
+# doit("rush-hour-push.csv", rush.hour.push)
+
+message("crazy 12 tph all morning")
 message("")
-doit("rush-hour-push.csv", rush.hour.push)
+doit("12tph-local.csv", function () make.local.service(360,720,12))
