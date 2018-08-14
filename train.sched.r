@@ -371,6 +371,18 @@ rush.hour.push <- function () {
 # message("")
 # doit("rush-hour-push.csv", rush.hour.push)
 
-message("crazy 12 tph all morning")
+# message("crazy 12 tph all morning")
+# message("")
+# doit("12tph-local.csv", function () make.local.service(360,720,12))
+
+# message("less crazy 12 tph local/short service")
+# message("")
+# doit("12tph-short.csv", function () make.short.service(360,720,12))
+
+# message("10 tph all local")
+# message("")
+# doit("10tph-local.csv", function () make.local.service(360,720,10))
+
+message("7.5 tph (8-minute headways) all local")
 message("")
-doit("12tph-local.csv", function () make.local.service(360,720,12))
+doit("7.5tph-local.csv", function () make.local.service(360,720,7.5))
