@@ -83,7 +83,8 @@ sample.arrivals <- function (trains, boardings, station, desired.offset = -5,
 # Sample function, uses the global variables
 #
 sample.pax <- function (station) {
-  return (sample.arrivals(trains, boardings.ctps, station))
+  return (sample.arrivals(trains, boardings.ctps, station,
+  	 		  desired.offset = runif(1, -5, 0)))
 }
 
 #
@@ -383,6 +384,79 @@ rush.hour.push <- function () {
 # message("")
 # doit("10tph-local.csv", function () make.local.service(360,720,10))
 
-message("7.5 tph (8-minute headways) all local")
-message("")
-doit("7.5tph-local.csv", function () make.local.service(360,720,7.5))
+# message("7.5 tph (8-minute headways) all local")
+# message("")
+# doit("7.5tph-local.csv", function () make.local.service(360,720,7.5))
+
+# Here's another somewhat complicated service pattern, although easier
+# than the "rush-hour push", it tries to implement many of the same ideas
+# in a form that's more implementable given current limitations.
+#
+# The base level of service is 4 trains per hour (15-minute headways).
+# We add an additional 4 tph, for alternating 7- and 8-minute headways,
+# between 7:00 and 9:30, then back to base level for the rest of the day.
+# We're going to simulate two different versions of this service, as
+# usual, one with all local service and one with short turns.  In
+# addition, the first hour of service is always "short", because we
+# want to start trains from Framingham to reduce cycle time (and
+# those trains would be useful anyway, relative to operating costs,
+# unlike a 4:02 departure from Worcester before the station is even open.
+# This doesn't affect the simulation (because we have no early-morning
+# passenger data) but makes the writeup easier.
+#
+mixed.4.and.8.tph.local <- function () {
+  early.t <- (0:3 * 15) + 300
+  early.s <- rep('short', length(early.t))
+  shoulder.t <- (0:3 * 15) + 360
+  shoulder.s <- rep('local', length(shoulder.t))
+  rush.basic <- c(0, 8, 15, 22)
+  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
+  rush.s <- rep('local', length(rush.t))
+  late.t <- (0:11 * 15) + 570
+  late.s <- rep('local', length(late.t))
+
+  t <- c(early.t, shoulder.t, rush.t, late.t)
+  s <- c(early.s, shoulder.s, rush.s, late.s)
+  names(t) <- paste('X', as.character(t), sep="")
+  return (list(t, s))
+}
+
+doit("4+8tph-local.csv", mixed.4.and.8.tph.local)
+
+mixed.4.and.8.tph.short <- function () {
+  early.t <- (0:3 * 15) + 300
+  early.s <- rep('short', length(early.t))
+  shoulder.t <- (0:3 * 15) + 360
+  shoulder.s <- rep('local', length(shoulder.t))
+  rush.basic <- c(0, 8, 15, 22)
+  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
+  rush.s <- rep(c('local', 'short'), length(rush.t) %/% 2)
+  late.t <- (0:11 * 15) + 570
+  late.s <- rep('local', length(late.t))
+
+  t <- c(early.t, shoulder.t, rush.t, late.t)
+  s <- c(early.s, shoulder.s, rush.s, late.s)
+  names(t) <- paste('X', as.character(t), sep="")
+  return (list(t, s))
+}
+
+doit("4+8tph-short.csv", mixed.4.and.8.tph.short)
+
+mixed.4.and.8.tph.short.2 <- function () {
+  early.t <- (0:3 * 15) + 300
+  early.s <- rep('short', length(early.t))
+  shoulder.t <- (0:3 * 15) + 360
+  shoulder.s <- rep('local', length(shoulder.t))
+  rush.basic <- c(0, 8, 15, 22)
+  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
+  rush.s <- rep(c('short', 'local'), length(rush.t) %/% 2)
+  late.t <- (0:11 * 15) + 570
+  late.s <- rep('local', length(late.t))
+
+  t <- c(early.t, shoulder.t, rush.t, late.t)
+  s <- c(early.s, shoulder.s, rush.s, late.s)
+  names(t) <- paste('X', as.character(t), sep="")
+  return (list(t, s))
+}
+
+doit("4+8tph-short2.csv", mixed.4.and.8.tph.short.2)
