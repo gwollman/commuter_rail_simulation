@@ -481,8 +481,8 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
   return (list(v, rep(c('short', 'express'), length(v) %/% 2)))
 }
 
-zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 12)
-zone.express.4.plus.4 <- function () make.zone.service(300, 720, 4, 4, 12)
+zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 3)
+zone.express.4.plus.4 <- function () make.zone.service(300, 720, 4, 4, 3)
 message("4 local, 2 express")
 doit("4+2tph-zone-express.csv", zone.express.4.plus.2)
 message("4 local, 4 express")
