@@ -170,11 +170,26 @@ monte.carlo.pax <- function (n, sampler, new.arrivals, model.stations, terminal,
 }
     
 format.minutes <- function (time.in.minutes) {
-  # unclear why we need time.in.minutes %% 60 to be cast to numeric
-  paste(time.in.minutes %/% 60, formatC(as.numeric(time.in.minutes %% 60),
-  			    		format = "d", width = "2", flag = "0"),
-	sep = ":")
+    # unclear why we need time.in.minutes %% 60 to be cast to numeric
+    if (is.na(time.in.minutes)) {
+        return (NA)
+    } else {
+        return (paste(time.in.minutes %/% 60,
+                      formatC(as.numeric(time.in.minutes %% 60),
+                              format = "d", width = "2",
+                              flag = "0"),
+                      sep = ":"))
+    }
 } 
+
+schedule.in.minutes <- function (schedule) {
+    rv <- as.data.frame(lapply(schedule,
+                               function (l) {
+                                   sapply(l, function (s) { format.minutes(s) })
+                               }))
+    rownames(rv) <- rownames(schedule)
+    return (rv)
+}
 
 result.handler <- function (filename, capacity, trains, want.median = FALSE) {
   return (function (med, pct90) {
@@ -281,7 +296,8 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
     schedule[train] <- schedule[train.type] + arrival - schedule[terminal, train.type]
   }
 
-  write.csv(schedule[names(new.arrivals)], paste('sched', filename, sep = '-'))
+  write.csv(schedule.in.minutes(schedule[names(new.arrivals)]),
+            paste('sched', filename, sep = '-'))
 
   # Just the times, in minutes since midnight
   #schedule.times = schedule[names(schedule)[3:length(names(schedule))]]
