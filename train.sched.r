@@ -481,9 +481,25 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
   return (list(v, rep(c('short', 'express'), length(v) %/% 2)))
 }
 
-zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 3)
-zone.express.4.plus.4 <- function () make.zone.service(300, 720, 4, 4, 3)
-message("4 local, 2 express")
-doit("4+2tph-zone-express.csv", zone.express.4.plus.2)
-message("4 local, 4 express")
-doit("4+4tph-zone-express.csv", zone.express.4.plus.4)
+# zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 3)
+# zone.express.4.plus.4 <- function () make.zone.service(300, 720, 4, 4, 3)
+# message("4 local, 2 express")
+# doit("4+2tph-zone-express.csv", zone.express.4.plus.2)
+# message("4 local, 4 express")
+# doit("4+4tph-zone-express.csv", zone.express.4.plus.4)
+
+# Generates a service pattern with 4 tph early and middays, 8 tph otherwise,
+# using the "zone express" pattern.
+zone.express.4.8.4 <- function () {
+    early <- make.zone.service(300, 420, 2, 2, 15)
+    peak <- make.zone.service(420, 570, 4, 4, 3)
+    late <- make.zone.service(570, 720, 2, 2, 15)
+
+    v <- c(early[[1]], peak[[1]], late[[1]])
+    s <- c(early[[2]], peak[[2]], late[[2]])
+    return (list(v, s))
+}
+
+message("zone express service, 8 tph peak, otherwise 4 tph")
+message("")
+doit("8tph-peak-zone-express.csv", zone.express.4.8.4)
