@@ -1,4 +1,4 @@
-# -*- r-mode -*-
+# -*- r -*-
 #
 # Load the 2012 CTPS data and transform it to make it slightly easier to
 # work with.  This should all be encapsulated somehow, but I'm not much
@@ -254,7 +254,7 @@ make.short.service <- function (start.time, end.time, tph) {
   if (n %% 2 == 1) {
     n <- n + 1
   }
-  v <- (0:(n - 1) * interval) + start.time
+  v <- ceiling(0:(n - 1) * interval) + start.time
   names(v) <- paste('X', as.character(v), sep="")
   return (list(v, rep(c('short', 'local'), n %/% 2)))
 }
@@ -267,7 +267,7 @@ make.short.service.2 <- function (start.time, end.time, tph) {
   if (n %% 2 == 1) {
     n <- n + 1
   }
-  v <- (0:(n - 1) * interval) + start.time
+  v <- ceiling(0:(n - 1) * interval) + start.time
   names(v) <- paste('X', as.character(v), sep="")
   return (list(v, rep(c('local', 'short'), n %/% 2)))
 }
@@ -505,10 +505,10 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
 # message("4 local, 4 express")
 # doit("4+4tph-zone-express.csv", zone.express.4.plus.4)
 
-# Generates a service pattern with 4 tph local service early and middays, 
-# 8 tph "zone express" pattern peak.
-zone.express.4.8.4 <- function () {
-    early <- make.local.service(300, 420, 4)
+# Generates a service pattern with 8 tph in a local/short pattern early,
+# 8 tph "zone express" pattern peak, 4 tph all-local middays.
+zone.express.8.8.4 <- function () {
+    early <- make.short.service(300, 420, 8)
     peak <- make.zone.service(420, 570, 4, 4, 5)
     late <- make.local.service(570, 720, 4)
 
@@ -517,9 +517,9 @@ zone.express.4.8.4 <- function () {
     return (list(v, s))
 }
 
-message("zone express service, 8 tph peak, otherwise 4 tph")
+message("zone express service, 4+4 tph early, then 8 tph peak, 4 tph middays")
 message("")
-doit("8tph-peak-zone-express.csv", zone.express.4.8.4)
+doit("8tph-peak-zone-express.csv", zone.express.8.8.4)
 
 # Code for human-readable schedule display:
 # x <- read.csv('sched-8tph-peak-zone-express.csv')
