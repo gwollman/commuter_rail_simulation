@@ -506,11 +506,11 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
 # doit("4+4tph-zone-express.csv", zone.express.4.plus.4)
 
 # Generates a service pattern with 8 tph in a local/short pattern early,
-# 8 tph "zone express" pattern peak, 4 tph all-local middays.
+# 8 tph "zone express" pattern peak, 4 tph local/short middays.
 zone.express.8.8.4 <- function () {
     early <- make.short.service(300, 420, 8)
     peak <- make.zone.service(420, 570, 4, 4, 5)
-    late <- make.local.service(570, 720, 4)
+    late <- make.short.service(570, 720, 4)
 
     v <- c(early[[1]], peak[[1]], late[[1]])
     s <- c(early[[2]], peak[[2]], late[[2]])
