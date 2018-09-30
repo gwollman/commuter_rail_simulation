@@ -309,7 +309,7 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 
   monte.carlo.pax(ntrials, sample.pax, new.arrivals, model.stations, terminal,
 		  schedule, 
-		  result.handler(filename, 232, names(new.arrivals)))
+		  result.handler(filename, 260, names(new.arrivals)))
 }
 
 doit <- function (filename, pattern) {
