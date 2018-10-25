@@ -233,16 +233,62 @@ class F40PHconsist < TrainPhysics
   end
 end
 
+class HSP46Consist < TrainPhysics
+  # Unless otherwise specified, from MotivePower HSP46 data sheet
+  HSP46_MASS  = 131.5           # t
+  HSP46_POWER_MIN = 2600        # kW - range per Wikipedia
+  HSP46_POWER_MAX = 3470        # kW - range per Wikipedia
+  # Continuous tractive effort 78,000 lbf = 347.0 kN (at 13 mi/h)
+  # Starting tractive effort 65,000 lbf = 284.19 kN
+  # Use the former for most favorable comparison
+  HSP46_A_MAX = 2.6377          # m/s/s
+  # P/m ratio = 19.8 at high HEP load, 26.4 at low HEP load
+
+  # Based on the Bombardier bilevel, because I can't find the number
+  # for an MBTA Kawasaki or Hyundai-Rotem bilevel
+  COACH_MASS  = 50.0            # t
+  COACH_SEATS = 170             # passengers
+
+  def initialize(coaches, passengers, hep_load = 0)
+    @hep_load = hep_load
+    power = HSP46_POWER_MAX - hep_load * (HSP46_POWER_MAX - HSP46_POWER_MIN)
+    @coaches = coaches
+    @passengers = passengers
+
+    # We have to adjust mass and a_max by the passenger load.
+    # Assumes same tractive effort, higher mass, so we can just
+    # scale by (total_mass / mass).
+
+    total_mass = HSP46_MASS + COACH_MASS * coaches + PASSENGER_MASS * passengers
+    a_max = HSP46_A_MAX * (HSP46_MASS / total_mass)
+
+    super(total_mass, power, a_max)
+  end
+
+  def show(fh = STDOUT)
+    seated = @coaches * COACH_SEATS
+    if (@passengers > seated)
+      fh.puts "HSP46 locomotive and #{@coaches} bilevel coaches with #{seated} passengers seated, #{@passengers - seated} standing"
+    else
+      fh.puts "HSP46 locomotive and #{@coaches} bilevel coaches with #{@passengers} passengers"
+    end
+    fh.puts "HEP load factor: #{@hep_load}"
+    super(fh)
+  end
+end
+
 SPEED_LIMIT_89 = 39.79          # 89 mi/h ~ 140 km/h
 SPEED_LIMIT_79 = 35.32          # 79 mi/h ~ 130 km/h
 SPEED_LIMIT_69 = 30.85          # 69 mi/h ~ 115 km/h
 SPEED_LIMIT_65 = 29.06          # 65 mi/h
 SPEED_LIMIT_59 = 26.38          # 59 mi/h
 
-SCENARIOS = { "flirt500.tsv" => FLIRT_75m_EMU.new(2, 500),
+SCENARIOS = { "flirt200.tsv" => FLIRT_75m_EMU.new(1, 200),
+	      "flirt500.tsv" => FLIRT_75m_EMU.new(2, 500),
+	      "flirt800.tsv" => FLIRT_75m_EMU.new(3, 800),
               "loco500.tsv" => F40PHconsist.new(3, 500),
-              "loco1600.tsv" => F40PHconsist.new(9, 1600),
-              "loco1600-nodwell.tsv" => F40PHconsist.new(9, 1600) }
+              "loco1600.tsv" => HSP46Consist.new(9, 1600, 0.5),
+              "loco1600-nodwell.tsv" => HSP46Consist.new(9, 1600, 0.5) }
 
 SCENARIOS.each do |file, model|
   model.show
