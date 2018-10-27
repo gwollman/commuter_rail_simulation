@@ -1,21 +1,21 @@
-km,station,local
-60,Northboro/290,0
-57.9,Northboro Center,3
-52.3,Marlboro/495,7
-45.1,Southborough,13
-41.2,Tech Park,17
-37.3,Framingham Center,21
-34.3,South Framingham,24
-32.1,West Natick,26
-28.5,Natick Center,29
-23.8,Wellesley Square,32
-21.8,Wellesley Hills,34
-20.3,Wellesley Farms,36
-16.9,Auburndale,39
-15.2,West Newton,41
-13.3,Newtonville,43
-7.5,Boston Landing,47
-6.2,West Station,49
-4.0,Yawkey,51
-2.1,Back Bay,54
-0,South Station,56
+km,station,time from prev (s),station time (s),total time (s),time with 7% pad,local
+60,Northboro/290,,,0,,0
+57.9,Northboro Center,,25,101,108.07,2
+52.3,Marlboro/495,,25,297,317.79,6
+45.1,Southborough,,25,541,578.87,10
+41.2,Tech Park,,25,692,740.44,13
+37.3,Framingham Center,,25,840,898.8,15
+34.3,South Framingham,126,25,991,1060.37,18
+32.1,West Natick,57,68,1116,1194.12,20
+28.5,Natick Center,93,68,1277,1366.39,23
+23.8,Wellesley Square,121,63,1461,1563.27,27
+21.8,Wellesley Hills,66,58,1585,1695.95,29
+20.3,Wellesley Farms,49,64,1698,1816.86,31
+16.9,Auburndale,88,67,1853,1982.71,34
+15.2,West Newton,47,65,1965,2102.55,36
+13.3,Newtonville,53,65,2083,2228.81,38
+7.5,Boston Landing,175,55,2313,2474.91,42
+6.2,West Station,47,55,2415,2584.05,44
+4.0,Yawkey,80,55,2550,2728.5,46
+2.1,Back Bay,99,55,2704,2893.28,49
+0,South Station,98,0,2802,2998.14,50
