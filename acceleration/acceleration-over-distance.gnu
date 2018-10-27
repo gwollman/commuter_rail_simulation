@@ -42,7 +42,7 @@ set tics back
 set grid nopolar
 set grid xtics nomxtics ytics nomytics noztics nomztics nortics nomrtics \
  nox2tics nomx2tics noy2tics nomy2tics nocbtics nomcbtics
-set grid layerdefault   lt 0 linecolor 0 linewidth 0.500,  lt 0 linecolor 0 linewidth 0.500
+set grid layerdefault   lt 0 linecolor 0 linewidth 0.500 dashtype solid,  lt 0 linecolor 0 linewidth 0.500 dashtype solid
 unset raxis
 set theta counterclockwise right
 set style parallel front  lt black linewidth 2.000 dashtype solid
@@ -52,7 +52,6 @@ set key noinvert samplen 4 spacing 1 width 0 height 0
 set key maxcolumns 0 maxrows 0
 set key noopaque
 unset label
-set label 2 "No train reaches 1.0 m/s^2 with a full passenger load" at 50.0000, 0.975000, 0.00000 left norotate back nopoint
 unset arrow
 set style increment default
 unset style line

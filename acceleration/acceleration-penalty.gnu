@@ -42,7 +42,7 @@ set tics back
 set grid nopolar
 set grid xtics nomxtics ytics nomytics noztics nomztics nortics nomrtics \
  nox2tics nomx2tics noy2tics nomy2tics nocbtics nomcbtics
-set grid layerdefault   lt 0 linecolor 0 linewidth 0.500,  lt 0 linecolor 0 linewidth 0.500
+set grid layerdefault   lt 0 linecolor 0 linewidth 0.500 dashtype solid,  lt 0 linecolor 0 linewidth 0.500 dashtype solid
 unset raxis
 set theta counterclockwise right
 set style parallel front  lt black linewidth 2.000 dashtype solid
@@ -52,7 +52,7 @@ set key noinvert samplen 4 spacing 1 width 0 height 0
 set key maxcolumns 0 maxrows 0
 set key noopaque
 unset label
-set label 1 "1.7 mi, 98 s" at 1.75000, 98.7500, 0.00000 left norotate back nopoint
+set label 1 "1.3 mi, 76 s" at 1.34000, 76.5000, 0.00000 left norotate back nopoint
 set label 2 "2.5 mi, 144 s" at 2.50000, 144.750, 0.00000 left norotate back nopoint
 set label 4 "4.2 mi, 235 s" at 3.90000, 220.000, 0.00000 left norotate back nopoint
 unset arrow
