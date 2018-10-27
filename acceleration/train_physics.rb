@@ -158,6 +158,8 @@ class TrainPhysics
     fh.puts "Max speed at a_max (v_a_max): #{@v_a_max} m/s"
     fh.puts "Time to reach v_a_max: #{@t_a_max} s"
   end
+
+  attr_reader :t, :s, :v
 end
 
 class EMU < TrainPhysics
