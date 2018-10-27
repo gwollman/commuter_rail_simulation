@@ -169,10 +169,6 @@ end
 class LocoHauled < TrainPhysics
 end
 
-# It would be interesting to do this simulation for a 100m
-# FLIRT with three traction motors (3000 kW) but I don't have
-# the details for these yet.
-
 # JKOY Class Sm5 data sheet:
 # https://wwwstadlerrailcom-live-01e96f7.s3-eu-central-1.amazonaws.com/filer_public/01/79/0179dc1a-031a-4c65-98e7-0573f6c1e99b/fjoy0908e.pdf
 #
@@ -182,6 +178,9 @@ end
 # to reasonable speed limits, which is what we're modeling here.
 # This version of the FLIRT is specified for 160 km/h ≅ 99 mi/h service
 # speed.
+#
+# Vehicle mass is from Wikipedia, since the Stadler data sheet doesn't
+# include it.
 #
 class ClassSm5 < EMU
   FLIRT_MASS  = 170.0           # t
@@ -210,6 +209,14 @@ class ClassSm5 < EMU
     super(fh)
   end
 end
+
+# Other FLIRT data sheets:
+# NSB version (105 m): https://wwwstadlerrailcom-live-01e96f7.s3-eu-central-1.amazonaws.com/filer_public/65/d7/65d73cab-ff99-4b8b-af00-6abe96e13179/fnsb1008e.pdf
+# NS versions (63 and 81 m): https://wwwstadlerrailcom-live-01e96f7.s3-eu-central-1.amazonaws.com/filer_public/f8/54/f8545b2a-4d48-463b-a994-5921cf0fa0ac/f3nsreiz0715e.pdf
+#
+# Neither data sheet gives the unladen weight of the trainset, so we don't
+# have enough information to drive the simulator yet.
+#
 
 class F40PHconsist < TrainPhysics
   # Figures from the first Google result for "F40PH tractive effort"
