@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 # This is a very simple physics simulator for trains.
 #
@@ -147,8 +148,6 @@ class TrainPhysics
       yield @t, @s, @v, 0
     end
 
-    puts "starting deceleration at s = #{@s}, t = #{@t}, v = #{@v}"
-
     simulate_stop {|*args| yield *args }
   end
 
@@ -161,28 +160,38 @@ class TrainPhysics
   end
 end
 
+class EMU < TrainPhysics
+end
+
 # It would be interesting to do this simulation for a 100m
 # FLIRT with three traction motors (3000 kW) but I don't have
 # the details for these yet.
-class FLIRT_75m_EMU < TrainPhysics
+
+# JKOY Class Sm5 data sheet:
+# https://wwwstadlerrailcom-live-01e96f7.s3-eu-central-1.amazonaws.com/filer_public/01/79/0179dc1a-031a-4c65-98e7-0573f6c1e99b/fjoy0908e.pdf
+#
+# Using the "Maximum power at wheel" figure rather than continuous power
+# here; whatever the duty cycle is, Alon Levy suggests that it's long
+# enough not to affect the flat-land acceleration from a standing stop
+# to reasonable speed limits, which is what we're modeling here.
+# This version of the FLIRT is specified for 160 km/h ≅ 99 mi/h service
+# speed.
+#
+class ClassSm5 < EMU
   FLIRT_MASS  = 170.0           # t
-  FLIRT_POWER = 2000.0          # kW
+  FLIRT_POWER = 2600.0          # kW
   FLIRT_SEATS = 250             # passengers
-  FLIRT_A_MAX = 1.02            # m/s/s
+  FLIRT_A_MAX = 1.2             # m/s/s
 
   def initialize(trainsets, passengers)
     @trainsets = trainsets
     @passengers = passengers
 
-    # We have to adjust mass and a_max by the passenger load.
-    # Assumes same tractive effort, higher mass, so we can just
-    # scale by (total_mass / mass).
-
     unloaded_mass = FLIRT_MASS * trainsets
     total_mass = unloaded_mass + PASSENGER_MASS * passengers
-    a_max = FLIRT_A_MAX * (unloaded_mass / total_mass)
 
-    super(total_mass, FLIRT_POWER * trainsets, a_max)
+    # Data sheet "Max. acceleration (full load)" so let's believe them.
+    super(total_mass, FLIRT_POWER * trainsets, FLIRT_A_MAX)
   end
 
   def show(fh = STDOUT)
@@ -283,9 +292,9 @@ SPEED_LIMIT_69 = 30.85          # 69 mi/h ~ 115 km/h
 SPEED_LIMIT_65 = 29.06          # 65 mi/h
 SPEED_LIMIT_59 = 26.38          # 59 mi/h
 
-SCENARIOS = { "flirt200.tsv" => FLIRT_75m_EMU.new(1, 200),
-	      "flirt500.tsv" => FLIRT_75m_EMU.new(2, 500),
-	      "flirt800.tsv" => FLIRT_75m_EMU.new(3, 800),
+SCENARIOS = { "flirt200.tsv" => ClassSm5.new(1, 200),
+	      "flirt500.tsv" => ClassSm5.new(2, 500),
+	      "flirt800.tsv" => ClassSm5.new(3, 800),
               "loco500.tsv" => F40PHconsist.new(3, 500),
               "loco1600.tsv" => HSP46Consist.new(9, 1600, 0.5),
               "loco1600-nodwell.tsv" => HSP46Consist.new(9, 1600, 0.5) }
@@ -294,7 +303,7 @@ SCENARIOS.each do |file, model|
   model.show
   puts ""
   dwell_time = 
-    if (model.is_a?(FLIRT_75m_EMU))
+    if (model.is_a?(EMU))
       25
     else
       55
