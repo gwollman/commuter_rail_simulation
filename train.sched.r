@@ -1,18 +1,21 @@
 # -*- r -*-
+
+flirt.75m.seating <- 260
+
 #
-# Load the 2012 CTPS data and transform it to make it slightly easier to
+# Load the 2018 CTPS data and transform it to make it slightly easier to
 # work with.  This should all be encapsulated somehow, but I'm not much
 # of an R programmer and I found it difficult enough to make even this
 # work.
 #
-boardings.ctps <- read.csv("2012-boardings.csv", row.names = 2)
-arrival.times.df <- read.csv("2012-arrival-times.csv")
+boardings.ctps <- read.csv("2018-boardings.csv", row.names = 2)
+arrival.times.df <- read.csv("2018-arrival-times.csv")
 stations <- rownames(boardings.ctps)
 terminal <- stations[length(stations)]
 
 #
 # Train times are coded as minutes since midnight local time.
-# These arrival times are for the Winter 2012 schedule, relevant to
+# These arrival times are for the Fall 2018 schedule, relevant to
 # the CTPS data.  Subset the boardings data to just those trains
 # whose arrival times we model.
 #
@@ -309,7 +312,8 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 
   monte.carlo.pax(ntrials, sample.pax, new.arrivals, model.stations, terminal,
 		  schedule, 
-		  result.handler(filename, 260, names(new.arrivals)))
+		  result.handler(filename, flirt.75m.seating,
+		  names(new.arrivals)))
 }
 
 doit <- function (filename, pattern) {
@@ -510,14 +514,14 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
 zone.express.8.8.4 <- function () {
     early <- make.short.service(300, 420, 8)
     peak <- make.zone.service(420, 570, 4, 4, 5)
-    late <- make.short.service(570, 720, 4)
+    late <- make.short.service(570, 900, 4)
 
     v <- c(early[[1]], peak[[1]], late[[1]])
     s <- c(early[[2]], peak[[2]], late[[2]])
     return (list(v, s))
 }
 
-message("zone express service, 4+4 tph early, then 8 tph peak, 4 tph middays")
+message("zone express service, 4+4 tph early, then 8 tph peak, 2+2 tph middays")
 message("")
 doit("8tph-peak-zone-express.csv", zone.express.8.8.4)
 
