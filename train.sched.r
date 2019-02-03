@@ -533,7 +533,7 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
 
 zone.express.6.6.4 <- function () {
     early <- make.short.service(300, 420, 6)
-    peak <- make.zone.service(420, 570, 3, 3, 10)
+    peak <- make.zone.service(420, 570, 3, 3, 8)
     late <- make.short.service(570, 900, 4)
 
     v <- c(early[[1]], peak[[1]], late[[1]])
