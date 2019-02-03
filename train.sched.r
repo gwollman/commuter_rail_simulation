@@ -1,6 +1,7 @@
 # -*- r -*-
 
 flirt.75m.seating <- 260
+flirt.80m.seating <- 290 # just a guess: add 5m -> 6 rows -> 30 seats
 
 #
 # Load the 2018 CTPS data and transform it to make it slightly easier to
@@ -276,7 +277,7 @@ make.short.service.2 <- function (start.time, end.time, tph) {
 }
 
 run.trials <- function(all.stations, stations.with.data, make.service.pattern,
-	      	       filename, ntrials = 250) {
+	      	       filename, ntrials = 250, seating = flirt.75m.seating) {
   # Drop the terminal off the list because the end of the line can never
   # have any boardings
   model.stations <- all.stations[stations.with.data]
@@ -312,16 +313,16 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
 
   monte.carlo.pax(ntrials, sample.pax, new.arrivals, model.stations, terminal,
 		  schedule, 
-		  result.handler(filename, flirt.75m.seating,
+		  result.handler(filename, seating,
 		  names(new.arrivals)))
 }
 
-doit <- function (filename, pattern) {
+doit <- function (filename, pattern, seating = flirt.75m.seating) {
   run.trials(all.stations = stations, 
 	     stations.with.data = apply(boardings.ctps, 1,
 	   		      	        function (row) !all(is.na(row))),
 	     filename = filename, make.service.pattern = pattern,
-	     ntrials = 250)
+	     ntrials = 250, seating = seating)
 }
 
 # message("4 tph, all local")
@@ -511,9 +512,28 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
 
 # Generates a service pattern with 8 tph in a local/short pattern early,
 # 8 tph "zone express" pattern peak, 4 tph local/short middays.
-zone.express.8.8.4 <- function () {
-    early <- make.short.service(300, 420, 8)
-    peak <- make.zone.service(420, 570, 4, 4, 5)
+# zone.express.8.8.4 <- function () {
+#     early <- make.short.service(300, 420, 8)
+#     peak <- make.zone.service(420, 570, 4, 4, 5)
+#     late <- make.short.service(570, 900, 4)
+
+#     v <- c(early[[1]], peak[[1]], late[[1]])
+#     s <- c(early[[2]], peak[[2]], late[[2]])
+#     return (list(v, s))
+# }
+
+# message("zone express service, 4+4 tph early, then 8 tph peak, 2+2 tph middays")
+# message("")
+# doit("8tph-peak-zone-express.csv", zone.express.8.8.4)
+
+# Code for human-readable schedule display:
+# x <- read.csv('sched-8tph-peak-zone-express.csv')
+# rownames(x) <- x$X
+# x[2:length(x)]
+
+zone.express.6.6.4 <- function () {
+    early <- make.short.service(300, 420, 6)
+    peak <- make.zone.service(420, 570, 3, 3, 10)
     late <- make.short.service(570, 900, 4)
 
     v <- c(early[[1]], peak[[1]], late[[1]])
@@ -521,11 +541,9 @@ zone.express.8.8.4 <- function () {
     return (list(v, s))
 }
 
-message("zone express service, 4+4 tph early, then 8 tph peak, 2+2 tph middays")
+message("zone express service, 3+3 tph early, then 6 tph peak, 2+2 tph middays")
 message("")
-doit("8tph-peak-zone-express.csv", zone.express.8.8.4)
+doit("6tph-peak-zone-express.csv", zone.express.6.6.4, seating = flirt.75m.seating)
+message("same with 290 seats per EMU")
+doit("6tph-peak-zone-express-290seat.csv", zone.express.6.6.4, seating = flirt.80m.seating)
 
-# Code for human-readable schedule display:
-# x <- read.csv('sched-8tph-peak-zone-express.csv')
-# rownames(x) <- x$X
-# x[2:length(x)]
