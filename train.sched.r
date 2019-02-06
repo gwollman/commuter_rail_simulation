@@ -233,7 +233,7 @@ make.new.schedule <- function () {
   # to support multiple schedules.
   #
   schedule <- read.csv('emu-schedule.csv')
-  schedule <- schedule[c("station", "local", "short", "express")]
+  schedule <- schedule[c("station", "local", "short", "express", "dieselexpress")]
   rownames(schedule) <- schedule$station
   schedule$local[1] = 0
 
@@ -489,7 +489,7 @@ rush.hour.push <- function () {
 # both local and express (with either block gap maintenance or separate
 # tracks).
 make.zone.service <- function (start.time, end.time, local.tph, express.tph,
-				express.offset) {
+				express.offset, express.type = 'express') {
   builder <- function (tph) {
     interval <- 60 / tph
     n <- (end.time - start.time) %/% interval
@@ -500,7 +500,7 @@ make.zone.service <- function (start.time, end.time, local.tph, express.tph,
   v.express <- builder(express.tph) + express.offset
   v <- sort(c(v.local, v.express))
   names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep(c('short', 'express'), length(v) %/% 2)))
+  return (list(v, rep(c('short', express.type), length(v) %/% 2)))
 }
 
 # zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 3)
@@ -547,3 +547,21 @@ doit("6tph-peak-zone-express.csv", zone.express.6.6.4, seating = flirt.75m.seati
 message("same with 290 seats per EMU")
 doit("6tph-peak-zone-express-290seat.csv", zone.express.6.6.4, seating = flirt.80m.seating)
 
+# Diesels can't keep up unless all diesel service is operated as express.
+# This could be simplified but leaving it like this shows how this
+# schedule is derived from the "regular" 6/6/4 schedule.
+diesel.express.6.6.4 <- function () {
+    early <- make.zone.service(300, 420, 3, 3, 10, express.type = 'dieselexpress')
+    peak <- make.zone.service(420, 560, 3, 3, 10, express.type = 'dieselexpress')
+    late <- make.zone.service(560, 900, 2, 2, 10, express.type = 'dieselexpress')
+
+    v <- c(early[[1]], peak[[1]], late[[1]])
+    s <- c(early[[2]], peak[[2]], late[[2]])
+    return (list(v, s))
+}
+
+message("zone express service, 3+3 tph early, then 6 tph peak, 2+2 tph middays")
+message("express services run as diesels (ignore unit counts)")
+message("")
+doit("6tph-peak-diesel-express.csv", diesel.express.6.6.4,
+     seating = flirt.75m.seating)
