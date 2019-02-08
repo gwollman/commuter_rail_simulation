@@ -9,10 +9,10 @@ km,station,providence.local,providence.diesel,Acela,NE.Regional,providence.expre
 25.1,Canton Center,,,,,,4,8
 24.1,Canton Jct,28,45,,,,6,11
 18.8,Route 128,31,50,25,31,23,9,16
-15.5,Readville,34,no stop,,,,,
+15.5,Readville,34,no stop,,,,12,
 13.5,Hyde Park,36,55,,,,14,21
-10.6,Cummins Hwy,38,infill,,,,,
-8.3,Forest Hills,42,no stop,,,,,
+10.6,Cummins Hwy,38,infill,,,,17,
+8.3,Forest Hills,42,no stop,,,,20,
 4,Ruggles,45,64,,,32,23,30
 2.1,Back Bay,47,68,35,42,34,25,34
 0,South Station,49,74,40,48,36,27,40
