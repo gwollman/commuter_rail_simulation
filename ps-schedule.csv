@@ -1,0 +1,18 @@
+km,station,time from prev (s),station time (s),total time (s),time with 7% pad,providence.local,providence.diesel,savings,Acela,NE.Regional,providence.express,stoughton.local,stoughton.diesel
+70.1,Providence,,,0,0,0,0,0,0,0,0,,
+63.6,Pawtucket,177,67,244,261.08,5,infill,infill,,,,,
+59.7,South Attleboro,103,75,422,451.54,8,9,1,,,,,
+51.4,Attleboro,187,75,684,731.88,13,19,6,,,,,
+40.0,Mansfield,257,75,1016,1087.12,19,29,10,,,,,
+29.2,Sharon,243,75,1334,1427.38,24,38,14,,,,,
+30.4,Stoughton,,,,,,,,,,,0,0
+25.1,Canton Center,,,,,,,,,,,4,8
+24.1,Canton Jct,115,75,1524,1630.68,28,45,17,,,,6,11
+18.8,Route 128,120,75,1719,1839.33,31,50,19,25,31,23,9,16
+15.5,Readville,75,70,1864,1994.48,34,no stop,no stop,,,,,
+13.5,Hyde Park,56,70,1990,2129.3,36,55,19,,,,14,21
+10.6,Cummins Hwy,65,70,2125,2273.75,38,infill,infill,,,,,
+8.3,Forest Hills,117,75,2317,2479.19,42,no stop,no stop,,,,,
+4,Ruggles,97,70,2484,2657.88,45,64,19,,,32,23,30
+2.1,Back Bay,53,60,2597,2778.79,47,68,21,35,42,34,25,34
+0,South Station,98,,2695,2883.65,49,74,25,40,48,36,27,40
