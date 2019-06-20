@@ -233,7 +233,7 @@ make.new.schedule <- function () {
   # to support multiple schedules.
   #
   schedule <- read.csv('ps-schedule.csv')
-  schedule <- schedule[c("station", "providence.local", "providence.diesel", "providence.express", "stoughton.local", "stoughton.900", "stoughton.902", "stoughton.904", "stoughton.906", "stoughton.908")]
+  schedule <- schedule[c("station", "providence.local", "providence.diesel", "providence.express", "stoughton.local", "stoughton.900", "stoughton.902", "stoughton.904", "stoughton.906", "stoughton.908", "providence.limited")]
   rownames(schedule) <- schedule$station
   schedule$local[1] = 0
 
@@ -338,23 +338,31 @@ make.existing.service <- function (providence.service, stoughton.service) {
 # Thus we can't use the more general mechanisms above to generate the schedule
 # automatically based on desired headways.
 
-# This schedule is trains every 15 minutes until 7:30, then every ten minutes
-# until 8:30, then every 15 minutes until 9:30, then every half hour.
+# This schedule is trains arriving every 15 minutes until 9:30, then
+# every half hour.  Between 7:30 and 9, additional limited-stop trains
+# run.  A local train takes 49 minutes and the limited takes 38 minutes,
+# so the limited leaves 13 minutes after the previous train and
+# arrives 2 minutes after the previous train.  (This avoids the need for
+# a third track.)
 
 trans.arrivals <- c(300, 315, 330, 345, 360, 375, 390, 405, 
 	            418, # Stoughton train 900
-		    420, 435, 
+		    420, 435,
 		    443, # Stoughton train 902
 		    450,
-		    460,
-		    470,
-	       	    480, 490,
-		    493, # express
-		    500,
+		    452, # limited
+		    # 465, # preempted by Amtrak
+		    467, # limited
+	       	    480,
+		    482, # limited
+		    495,
+		    497, # limited
 		    508, # Stoughton train 904, shifted 4 minutes earlier
 		    510,
-		    518, # express 
-		    525, 540, 
+		    512, # limited
+		    525,
+		    527, # limited
+		    540, 
 		    548, # Stoughton train 906
 		    555, 570,
 		    593, # Stoughton train 908, shifted 3 minutes later
@@ -362,19 +370,25 @@ trans.arrivals <- c(300, 315, 330, 345, 360, 375, 390, 405,
 
 names(trans.arrivals) <- c('V300', 'V315', 'V330', 'V345', 'V360', 'V375',
 		           'V390', 'V405', 'T418', 'V420', 'V435', 'T443',
-			   'V450', 'V460', 'V470', 'V480', 'V490', 'V493X',
-			   'V500',
-			   'T508', 'V510', 'V518X', 'V525',
-			   'V540', 'T548', 'V555', 'V570', 'T593', 'V600',
+			   'V450', 'V452L',
+			   # 'V465',
+			   'V467L', 'V480', 'V482L',
+			   'V495', 'V497L', 'T508', 'V510', 'V512L', 'V525',
+			   'V527L', 'V540',
+			   'T548', 'V555', 'V570', 'T593', 'V600',
 			   'V630', 'V660', 'V690', 'V720')
 trans.services <- c(rep('providence.local', 8), 'stoughton.900',
 	            rep('providence.local', 2), 'stoughton.902',
-		    rep('providence.local', 5), 'providence.express',
-		    'providence.local', 'stoughton.904',
-		    'providence.local', 'providence.express',
-		    rep('providence.local', 2), 'stoughton.906',
+		    'providence.local', 'providence.limited',
+		    # 'providence.local',
+		    'providence.limited',
+		    'providence.local', 'providence.limited',
+		    'providence.local', 'providence.limited',
+		    'stoughton.904',
+		    rep(c('providence.local', 'providence.limited'), 2),
+		    'providence.local', 'stoughton.906',
 		    rep('providence.local', 2), 'stoughton.908',
 		    rep('providence.local', 5))
 
-doit('plus-express.csv', function () list(trans.arrivals, trans.services),
+doit('4tph+limited.csv', function () list(trans.arrivals, trans.services),
 			      seating = flirt.80m.seating)
