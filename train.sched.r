@@ -9,8 +9,8 @@ flirt.80m.seating <- 290 # just a guess: add 5m -> 6 rows -> 30 seats
 # of an R programmer and I found it difficult enough to make even this
 # work.
 #
-boardings.ctps <- read.csv("2018-boardings.csv", row.names = 2)
-arrival.times.df <- read.csv("2018-arrival-times.csv")
+boardings.ctps <- read.csv("ps-boardings.csv", row.names = 2)
+arrival.times.df <- read.csv("ps-arrival-times.csv")
 stations <- rownames(boardings.ctps)
 terminal <- stations[length(stations)]
 
@@ -20,7 +20,7 @@ terminal <- stations[length(stations)]
 # the CTPS data.  Subset the boardings data to just those trains
 # whose arrival times we model.
 #
-arrival.times <- arrival.times.df$time_minute
+arrival.times <- arrival.times.df$time_minutes
 trains <- arrival.times.df$train
 names(arrival.times) <- trains
 # for some reason, we can't say boardings.ctps[trains] here, idk why
@@ -232,26 +232,33 @@ make.new.schedule <- function () {
   # For a local/express configuration would need to generalize this
   # to support multiple schedules.
   #
-  schedule <- read.csv('emu-schedule.csv')
-  schedule <- schedule[c("station", "local", "short", "express", "dieselexpress")]
+  schedule <- read.csv('ps-schedule.csv')
+  schedule <- schedule[c("station", "providence.local", "providence.diesel", "providence.express", "stoughton.local", "stoughton.900", "stoughton.902", "stoughton.904", "stoughton.906", "stoughton.908")]
   rownames(schedule) <- schedule$station
   schedule$local[1] = 0
 
   return (schedule)
 }
 
-# Generates a service pattern with all local service.
-make.local.service <- function (start.time, end.time, tph) {
+# Generates a service pattern with a single service *service.name*
+# repeated *tph* times per hour.  The default service is named 'local'
+# but not every line has a service by that name.
+make.simple.service <- function (start.time, end.time, tph,
+		      	        service.name = 'local',
+				train.prefix = 'X') {
   interval <- 60 / tph
   n <- (end.time - start.time) %/% interval
   v <- (0:(n - 1) * interval) + start.time
-  names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep('local', n)))
+  names(v) <- paste(train.prefix, as.character(v), sep="")
+  return (list(v, rep(service.name, n)))
 }
 
-# Generates a service pattern with all local service, but
-# alternating short-turn and full-length trains.
-make.short.service <- function (start.time, end.time, tph) {
+# Generates a service pattern with two services alternating.  The
+# parameter *train.prefix* can be a list of prefixes or a single string;
+# if a list, the prefixes will be applied to the respective *service.names*.
+make.short.service <- function (start.time, end.time, tph,
+		      	        service.names = c('short', 'local'),
+				train.prefix = c('X', 'Y')) {
   interval <- 60 / tph
   n <- (end.time - start.time) %/% interval
   # Number of trains must be even for this service pattern
@@ -259,21 +266,8 @@ make.short.service <- function (start.time, end.time, tph) {
     n <- n + 1
   }
   v <- ceiling(0:(n - 1) * interval) + start.time
-  names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep(c('short', 'local'), n %/% 2)))
-}
-
-# Same as make.short.service but reverses the order.
-make.short.service.2 <- function (start.time, end.time, tph) {
-  interval <- 60 / tph
-  n <- (end.time - start.time) %/% interval
-  # Number of trains must be even for this service pattern
-  if (n %% 2 == 1) {
-    n <- n + 1
-  }
-  v <- ceiling(0:(n - 1) * interval) + start.time
-  names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep(c('local', 'short'), n %/% 2)))
+  names(v) <- paste(train.prefix, as.character(v), sep="")
+  return (list(v, rep(service.names, n %/% 2)))
 }
 
 run.trials <- function(all.stations, stations.with.data, make.service.pattern,
@@ -284,10 +278,6 @@ run.trials <- function(all.stations, stations.with.data, make.service.pattern,
   terminal <- tail(all.stations, 1)
 
   schedule <- make.new.schedule()
-
-  # New service pattern: 5 trains per hour arriving at South Station starting
-  # at 0600 (360 minutes) for 6 hours (last arrival 12:00 noon) for a
-  # total of 30 trains
   service.pattern <- make.service.pattern()
   new.arrivals <- service.pattern[[1]]
   train.types <- service.pattern[[2]]
@@ -323,245 +313,68 @@ doit <- function (filename, pattern, seating = flirt.75m.seating) {
 	   		      	        function (row) !all(is.na(row))),
 	     filename = filename, make.service.pattern = pattern,
 	     ntrials = 250, seating = seating)
+  NA
 }
-
-# message("4 tph, all local")
-# message("")
-# doit("4tph-local.csv", function () make.local.service(360, 720, 4))
-
-# message("4 tph, alternating short and local")
-# message("")
-# doit("4tph-short.csv", function () make.short.service(360, 720, 4))
-
-# message("5 tph, all local")
-# message("")
-# doit("5tph-local.csv", function () make.local.service(360, 720, 5))
-
-# message("5 tph, alternating short and local")
-# message("")
-# doit("5tph-short.csv", function () make.short.service(360, 720, 5))
-
-# message("6 tph, all local")
-# message("")
-# doit("6tph-local.csv", function () make.local.service(360, 720, 6))
-
-# message("6 tph, alternative short and local")
-# message("")
-# doit("6tph-short.csv", function () make.short.service(360, 720, 6))
-
-# Here's a more complicated service pattern:
-#  alternating short turns and local service, 4 tph, during low-demand periods
-#  (arbitrarily, 6a-7a and 10a-12n)
-#  6 tph all-local service during peak (7a-10a)
-# complicated.service <- function () {
-#   early.t <- c(360,     375,     390,     405,     420)
-#   early.s <- c('local', 'short', 'local', 'short', 'local')
-#   rush.t <- (0:16 * 10) + 430
-#   rush.s <- rep('local', length(rush.t))
-#   late.t <- c(600,     615,     630,     645,     660,     675,     690,     705,     720)
-#   late.s <- c('local', 'short', 'local', 'short', 'local', 'short', 'local', 'short', 'local')
-#   t <- c(early.t, rush.t, late.t)
-#   s <- c(early.s, rush.s, late.s)
-#   names(t) <- paste('X', as.character(t), sep="")
-#   return (list(t, s))
-# }
-
-# message("complicated service")
-# message("")
-# doit("complicated.csv", complicated.service)
-
-# The biggest capacity crunch seems to be during rush right around
-# 9:00, so let's try this service (all trains local):
-#
-# 6 tph 6:00-8:30 (16 trains)
-# every 8 minutes from 8:40 to 9:12 (5 trains)
-# 6 tph 9:20-10:00 (5 trains)
-# 3 tph 10:20-12:00 (6 trains) and the rest of midday
-#
-rush.hour.push <- function () {
-  rush.t <- (0:15 * 10) + 360
-  rush.plus.t <- (0:4 * 8) + 520
-  shoulder.t <- (0:4 * 10) + 560
-  midday.t <- (0:5 * 20) + 620
-
-  t <- c(rush.t, rush.plus.t, shoulder.t, midday.t)
-  s <- rep('local', length(t))
-  names(t) <- paste('X', as.character(t), sep="")
-  return (list(t, s))
-}
-
-# message("rush-hour push")
-# message("")
-# doit("rush-hour-push.csv", rush.hour.push)
-
-# message("crazy 12 tph all morning")
-# message("")
-# doit("12tph-local.csv", function () make.local.service(360,720,12))
-
-# message("less crazy 12 tph local/short service")
-# message("")
-# doit("12tph-short.csv", function () make.short.service(360,720,12))
-
-# message("10 tph all local")
-# message("")
-# doit("10tph-local.csv", function () make.local.service(360,720,10))
-
-# message("7.5 tph (8-minute headways) all local")
-# message("")
-# doit("7.5tph-local.csv", function () make.local.service(360,720,7.5))
-
-# Here's another somewhat complicated service pattern, although easier
-# than the "rush-hour push", it tries to implement many of the same ideas
-# in a form that's more implementable given current limitations.
-#
-# The base level of service is 4 trains per hour (15-minute headways).
-# We add an additional 4 tph, for alternating 7- and 8-minute headways,
-# between 7:00 and 9:30, then back to base level for the rest of the day.
-# We're going to simulate two different versions of this service, as
-# usual, one with all local service and one with short turns.  In
-# addition, the first hour of service is always "short", because we
-# want to start trains from Framingham to reduce cycle time (and
-# those trains would be useful anyway, relative to operating costs,
-# unlike a 4:02 departure from Worcester before the station is even open.
-# This doesn't affect the simulation (because we have no early-morning
-# passenger data) but makes the writeup easier.
-#
-#mixed.4.and.8.tph.local <- function () {
-#  early.t <- (0:3 * 15) + 300
-#  early.s <- rep('short', length(early.t))
-#  shoulder.t <- (0:3 * 15) + 360
-#  shoulder.s <- rep('local', length(shoulder.t))
-#  rush.basic <- c(0, 8, 15, 22)
-#  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
-#  rush.s <- rep('local', length(rush.t))
-#  late.t <- (0:11 * 15) + 570
-#  late.s <- rep('local', length(late.t))
-#
-#  t <- c(early.t, shoulder.t, rush.t, late.t)
-#  s <- c(early.s, shoulder.s, rush.s, late.s)
-#  names(t) <- paste('X', as.character(t), sep="")
-#  return (list(t, s))
-#}
-#
-#doit("4+8tph-local.csv", mixed.4.and.8.tph.local)
-#
-#mixed.4.and.8.tph.short <- function () {
-#  early.t <- (0:3 * 15) + 300
-#  early.s <- rep('short', length(early.t))
-#  shoulder.t <- (0:3 * 15) + 360
-#  shoulder.s <- rep('local', length(shoulder.t))
-#  rush.basic <- c(0, 8, 15, 22)
-#  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
-#  rush.s <- rep(c('local', 'short'), length(rush.t) %/% 2)
-#  late.t <- (0:11 * 15) + 570
-#  late.s <- rep('local', length(late.t))
-#
-#  t <- c(early.t, shoulder.t, rush.t, late.t)
-#  s <- c(early.s, shoulder.s, rush.s, late.s)
-#  names(t) <- paste('X', as.character(t), sep="")
-#  return (list(t, s))
-#}
-#
-#doit("4+8tph-short.csv", mixed.4.and.8.tph.short)
-#
-#mixed.4.and.8.tph.short.2 <- function () {
-#  early.t <- (0:3 * 15) + 300
-#  early.s <- rep('short', length(early.t))
-#  shoulder.t <- (0:3 * 15) + 360
-#  shoulder.s <- rep('local', length(shoulder.t))
-#  rush.basic <- c(0, 8, 15, 22)
-#  rush.t <- (rush.basic + c(rep(0, 4), rep(30, 4), rep(60, 4), rep(90, 4), rep(120, 4))) + 420
-#  rush.s <- rep(c('short', 'local'), length(rush.t) %/% 2)
-#  late.t <- (0:11 * 15) + 570
-#  late.s <- rep('local', length(late.t))
-#
-#  t <- c(early.t, shoulder.t, rush.t, late.t)
-#  s <- c(early.s, shoulder.s, rush.s, late.s)
-#  names(t) <- paste('X', as.character(t), sep="")
-#  return (list(t, s))
-#}
-#
-#doit("4+8tph-short2.csv", mixed.4.and.8.tph.short.2)
-
-# Generates a service pattern with alternating short-turn and
-# zone express trains.  express.offset is the time offset between
-# local and express trains -- must ensure conflict-free travel for
-# both local and express (with either block gap maintenance or separate
-# tracks).
-make.zone.service <- function (start.time, end.time, local.tph, express.tph,
-				express.offset, express.type = 'express') {
-  builder <- function (tph) {
-    interval <- 60 / tph
-    n <- (end.time - start.time) %/% interval
-    result <- (0:(n - 1) * interval) + start.time
-    return (result)
-  }
-  v.local <- builder(local.tph)
-  v.express <- builder(express.tph) + express.offset
-  v <- sort(c(v.local, v.express))
-  names(v) <- paste('X', as.character(v), sep="")
-  return (list(v, rep(c('short', express.type), length(v) %/% 2)))
-}
-
-# zone.express.4.plus.2 <- function () make.zone.service(300, 720, 4, 2, 3)
-# zone.express.4.plus.4 <- function () make.zone.service(300, 720, 4, 4, 3)
-# message("4 local, 2 express")
-# doit("4+2tph-zone-express.csv", zone.express.4.plus.2)
-# message("4 local, 4 express")
-# doit("4+4tph-zone-express.csv", zone.express.4.plus.4)
-
-# Generates a service pattern with 8 tph in a local/short pattern early,
-# 8 tph "zone express" pattern peak, 4 tph local/short middays.
-# zone.express.8.8.4 <- function () {
-#     early <- make.short.service(300, 420, 8)
-#     peak <- make.zone.service(420, 570, 4, 4, 5)
-#     late <- make.short.service(570, 900, 4)
-
-#     v <- c(early[[1]], peak[[1]], late[[1]])
-#     s <- c(early[[2]], peak[[2]], late[[2]])
-#     return (list(v, s))
-# }
-
-# message("zone express service, 4+4 tph early, then 8 tph peak, 2+2 tph middays")
-# message("")
-# doit("8tph-peak-zone-express.csv", zone.express.8.8.4)
 
 # Code for human-readable schedule display:
 # x <- read.csv('sched-8tph-peak-zone-express.csv')
 # rownames(x) <- x$X
 # x[2:length(x)]
 
-zone.express.6.6.4 <- function () {
-    early <- make.short.service(300, 420, 6)
-    peak <- make.zone.service(420, 560, 3, 3, 8)
-    late <- make.short.service(560, 900, 4)
-
-    v <- c(early[[1]], peak[[1]], late[[1]])
-    s <- c(early[[2]], peak[[2]], late[[2]])
-    return (list(v, s))
+# First, let's resample the existing service.
+make.existing.service <- function (providence.service, stoughton.service) {
+  return (list(arrival.times,
+	       ifelse(grepl("^V", trains), providence.service,
+	              stoughton.service)))
 }
 
-message("zone express service, 3+3 tph early, then 6 tph peak, 2+2 tph middays")
-message("")
-doit("6tph-peak-zone-express.csv", zone.express.6.6.4, seating = flirt.75m.seating)
-message("same with 290 seats per EMU")
-doit("6tph-peak-zone-express-290seat.csv", zone.express.6.6.4, seating = flirt.80m.seating)
+#doit('existing.csv', function () make.existing.service('providence.diesel', 'stoughton.diesel'))
 
-# Diesels can't keep up unless all diesel service is operated as express.
-# This could be simplified but leaving it like this shows how this
-# schedule is derived from the "regular" 6/6/4 schedule.
-diesel.express.6.6.4 <- function () {
-    early <- make.zone.service(300, 420, 3, 3, 10, express.type = 'dieselexpress')
-    peak <- make.zone.service(420, 560, 3, 3, 10, express.type = 'dieselexpress')
-    late <- make.zone.service(560, 900, 2, 2, 10, express.type = 'dieselexpress')
+#doit('final.csv', function () make.short.service(300, 15*60, 8, 'providence.local', 'stoughton.local', c('V', 'T')), seating = flirt.80m.seating)
 
-    v <- c(early[[1]], peak[[1]], late[[1]])
-    s <- c(early[[2]], peak[[2]], late[[2]])
-    return (list(v, s))
-}
+# This is a hand-hacked custom schedule that assumes current
+# Amtrak schedules are fixed and current Stoughton service will
+# continue to be provided by diesels (subject to some minor time shifts).
+# Thus we can't use the more general mechanisms above to generate the schedule
+# automatically based on desired headways.
 
-message("zone express service, 3+3 tph early, then 6 tph peak, 2+2 tph middays")
-message("express services run as diesels (ignore unit counts)")
-message("")
-doit("6tph-peak-diesel-express.csv", diesel.express.6.6.4,
-     seating = flirt.75m.seating)
+# This schedule is trains every 15 minutes until 7:30, then every ten minutes
+# until 8:30, then every 15 minutes until 9:30, then every half hour.
+
+trans.arrivals <- c(300, 315, 330, 345, 360, 375, 390, 405, 
+	            418, # Stoughton train 900
+		    420, 435, 
+		    443, # Stoughton train 902
+		    450,
+		    460,
+		    470,
+	       	    480, 490,
+		    493, # express
+		    500,
+		    508, # Stoughton train 904, shifted 4 minutes earlier
+		    510,
+		    518, # express 
+		    525, 540, 
+		    548, # Stoughton train 906
+		    555, 570,
+		    593, # Stoughton train 908, shifted 3 minutes later
+		    600, 630, 660, 690, 720)
+
+names(trans.arrivals) <- c('V300', 'V315', 'V330', 'V345', 'V360', 'V375',
+		           'V390', 'V405', 'T418', 'V420', 'V435', 'T443',
+			   'V450', 'V460', 'V470', 'V480', 'V490', 'V493X',
+			   'V500',
+			   'T508', 'V510', 'V518X', 'V525',
+			   'V540', 'T548', 'V555', 'V570', 'T593', 'V600',
+			   'V630', 'V660', 'V690', 'V720')
+trans.services <- c(rep('providence.local', 8), 'stoughton.900',
+	            rep('providence.local', 2), 'stoughton.902',
+		    rep('providence.local', 5), 'providence.express',
+		    'providence.local', 'stoughton.904',
+		    'providence.local', 'providence.express',
+		    rep('providence.local', 2), 'stoughton.906',
+		    rep('providence.local', 2), 'stoughton.908',
+		    rep('providence.local', 5))
+
+doit('plus-express.csv', function () list(trans.arrivals, trans.services),
+			      seating = flirt.80m.seating)
